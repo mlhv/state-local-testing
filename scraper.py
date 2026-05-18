@@ -3,8 +3,6 @@ calEProcure event enrichment scraper.
 Usage:
   python scraper.py probe   -- fetch one event and print extracted fields
   python scraper.py run     -- scrape all events from the XLS and output enriched CSV
-
-Requires nlx_body.txt — run python api_probe.py once to generate it.
 """
 
 import json
@@ -156,8 +154,9 @@ def load_xls():
 
 def load_template():
     if not Path(TEMPLATE_PATH).exists():
-        sys.exit(f"ERROR: {TEMPLATE_PATH} not found — run 'python api_probe.py' first.")
+        sys.exit(f"ERROR: {TEMPLATE_PATH} not found — run 'python scraper.py setup' first.")
     return Path(TEMPLATE_PATH).read_text()
+
 
 
 def probe():

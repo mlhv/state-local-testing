@@ -1,7 +1,3 @@
 pandas
 requests
-beautifulsoup4
 xlrd
-openpyxl
-lxml
-playwright
