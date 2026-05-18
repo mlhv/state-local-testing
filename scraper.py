@@ -5,6 +5,7 @@ Usage:
   python scraper.py run     -- scrape all events from the XLS and output enriched CSV
 """
 
+import re
 import sys
 import time
 import pandas as pd
@@ -38,7 +39,10 @@ def make_page(p):
     return browser, page
 
 def build_url(dept_code, event_id):
-    dept = str(int(dept_code)).zfill(4)
+    try:
+        dept = str(int(dept_code)).zfill(4)
+    except (ValueError, TypeError):
+        dept = str(dept_code).strip()
     return f"https://caleprocure.ca.gov/event/{dept}/{event_id}"
 
 def get_rendered_html(page, url):
@@ -53,6 +57,10 @@ def get_rendered_html(page, url):
 
 def extract_event_data(html):
     soup = BeautifulSoup(html, "html.parser")
+
+    def text(label):
+        el = soup.find(attrs={"data-if-label": label})
+        return el.get_text(strip=True).replace("\xa0", " ").strip() if el else ""
 
     # Description
     desc_el = soup.find(attrs={"data-if-label": "descriptiondetails"})
@@ -73,9 +81,43 @@ def extract_event_data(html):
         if code and code != "\xa0":
             unspsc_pairs.append(f"{code}: {desc}" if desc else code)
 
+    # Contractor License Types — same cloned-row pattern as UNSPSC
+    contractor_licenses = []
+    contractor_rows = (
+        soup.find_all("tr", attrs={"data-if-label": "contractorTblBody"}) +
+        soup.find_all("tr", attrs={"data-if-cloned-from": "contractorTblBody"})
+    )
+    for row in contractor_rows:
+        type_el = row.find("td", attrs={"data-if-label": "contractorTblType"})
+        cdesc_el = row.find("td", attrs={"data-if-label": "contractorTblDescription"})
+        lic_type = type_el.get_text(strip=True) if type_el else ""
+        lic_desc = cdesc_el.get_text(strip=True) if cdesc_el else ""
+        if lic_type and lic_type != "\xa0":
+            contractor_licenses.append(f"{lic_type}: {lic_desc}" if lic_desc else lic_type)
+
+    # Service Area (Counties) — NLX emits one row per county with indexed labels (serviceAreaTblBody-0 … -57)
+    # plus the template row (serviceAreaTblBody), so match on prefix.
+    counties = []
+    sa_rows = soup.find_all("tr", attrs={"data-if-label": re.compile(r"^serviceAreaTblBody")})
+    for row in sa_rows:
+        county_el = row.find("td", attrs={"data-if-label": "serviceAreaCounty"})
+        county = county_el.get_text(strip=True) if county_el else ""
+        if county and county != "\xa0":
+            counties.append(county)
+
     return {
         "description": description,
         "unspsc_codes": "; ".join(unspsc_pairs),
+        "contractor_licenses": "; ".join(contractor_licenses),
+        "counties": "; ".join(counties),
+        "event_version": text("eventVersion"),
+        "published_date": text("eventStartDate"),
+        "contact_phone": text("phoneText"),
+        "prebid_mandatory": text("conferenceText"),
+        "prebid_date": text("dateText"),
+        "prebid_time": text("timeText"),
+        "prebid_location": text("locationText"),
+        "prebid_comments": text("commentsText"),
     }
 
 def load_xls():
@@ -105,6 +147,19 @@ def probe():
     print(data["description"] or "(empty — check probe_rendered.html for the actual DOM)")
     print("\n=== UNSPSC Codes ===")
     print(data["unspsc_codes"] or "(none found)")
+    print("\n=== Contractor License Types ===")
+    print(data["contractor_licenses"] or "(none)")
+    print("\n=== Counties (Service Area) ===")
+    print(data["counties"] or "(none)")
+    print("\n=== Event Details ===")
+    print(f"Version: {data['event_version']}")
+    print(f"Published Date: {data['published_date']}")
+    print(f"Contact Phone: {data['contact_phone']}")
+    print(f"Pre-Bid Mandatory: {data['prebid_mandatory']}")
+    print(f"Pre-Bid Date: {data['prebid_date']}")
+    print(f"Pre-Bid Time: {data['prebid_time']}")
+    print(f"Pre-Bid Location: {data['prebid_location']}")
+    print(f"Pre-Bid Comments: {data['prebid_comments']}")
 
 def run():
     df = load_xls()
@@ -135,7 +190,12 @@ def run():
                 extra = extract_event_data(html)
             except Exception as e:
                 print(f"  ERROR: {e}")
-                extra = {"description": "", "unspsc_codes": ""}
+                extra = {
+                    "description": "", "unspsc_codes": "", "contractor_licenses": "",
+                    "counties": "", "event_version": "", "published_date": "",
+                    "contact_phone": "", "prebid_mandatory": "", "prebid_date": "",
+                    "prebid_time": "", "prebid_location": "", "prebid_comments": "",
+                }
 
             enriched.append({**row.to_dict(), **extra, "event_url": url})
             pd.DataFrame(enriched).to_csv(OUTPUT_PATH, index=False)

@@ -3,3 +3,6 @@ events.xls
 probe_rendered.html
 venv
 .env
+__pycache__
+.claude
+HANDOFF.md
