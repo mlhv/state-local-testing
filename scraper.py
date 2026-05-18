@@ -154,10 +154,8 @@ def load_xls():
 
 def load_template():
     if not Path(TEMPLATE_PATH).exists():
-        sys.exit(f"ERROR: {TEMPLATE_PATH} not found — run 'python scraper.py setup' first.")
+        sys.exit(f"ERROR: {TEMPLATE_PATH} not found — copy the IF-TargetContent payload from DevTools and replace the file ")
     return Path(TEMPLATE_PATH).read_text()
-
-
 
 def probe():
     df = load_xls()
