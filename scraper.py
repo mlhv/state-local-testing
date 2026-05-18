@@ -1,42 +1,46 @@
 """
-calEProcure event enrichment scraper (Playwright version).
+calEProcure event enrichment scraper.
 Usage:
-  python scraper.py probe   -- fetch one event page and print extracted fields
+  python scraper.py probe   -- fetch one event and print extracted fields
   python scraper.py run     -- scrape all events from the XLS and output enriched CSV
+
+Requires nlx_body.txt — run python api_probe.py once to generate it.
 """
 
-import re
+import json
 import sys
 import time
+import requests
 import pandas as pd
 from pathlib import Path
-from bs4 import BeautifulSoup
-from playwright.sync_api import sync_playwright, TimeoutError as PWTimeout
 
 XLS_PATH = "events.xls"
 OUTPUT_PATH = "events_enriched.csv"
-PAGE_TIMEOUT_MS = 25_000
-DELAY_SECONDS = 1.5
+TEMPLATE_PATH = "nlx_body.txt"
+DELAY_SECONDS = 0.5
+NLX_BASE = (
+    "https://caleprocure.ca.gov/nlx3/psc/psfpd1_newwin"
+    "/SUPPLIER/ERP/c/AUC_MANAGE_BIDS.AUC_RESP_INQ_DTL.GBL"
+)
+FIXED_PARAMS = {
+    "Page":         "AUC_RESP_INQ_DTL",
+    "Action":       "U",
+    "AUC_ROUND":    "1",
+    "BIDDER_ID":    "BID0000001",
+    "BIDDER_LOC":   "1",
+    "BIDDER_SETID": "STATE",
+    "BIDDER_TYPE":  "B",
+}
+UA = (
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+    "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+)
+EMPTY_EXTRA = {k: "" for k in [
+    "description", "unspsc_codes", "contractor_licenses", "counties",
+    "service_area_ids", "event_version", "published_date", "contact_phone",
+    "prebid_mandatory", "prebid_date", "prebid_time", "prebid_location", "prebid_comments",
+]}
 
-def make_page(p):
-    """Launch a browser context that looks like a real user to avoid 403s."""
-    browser = p.chromium.launch(
-        headless=True,
-        args=["--disable-blink-features=AutomationControlled"],
-    )
-    ctx = browser.new_context(
-        user_agent=(
-            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
-            "AppleWebKit/537.36 (KHTML, like Gecko) "
-            "Chrome/124.0.0.0 Safari/537.36"
-        ),
-        locale="en-US",
-        viewport={"width": 1280, "height": 800},
-    )
-    # Remove the navigator.webdriver flag that identifies Playwright
-    ctx.add_init_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
-    page = ctx.new_page()
-    return browser, page
 
 def build_url(dept_code, event_id):
     try:
@@ -45,124 +49,157 @@ def build_url(dept_code, event_id):
         dept = str(dept_code).strip()
     return f"https://caleprocure.ca.gov/event/{dept}/{event_id}"
 
-def get_rendered_html(page, url):
-    """Navigate and wait for InFlight NLX to finish injecting data."""
-    page.goto(url, wait_until="domcontentloaded", timeout=PAGE_TIMEOUT_MS)
+
+def norm_dept(dept_code):
     try:
-        # networkidle = no network requests for 500ms — data injection is done by then
-        page.wait_for_load_state("networkidle", timeout=PAGE_TIMEOUT_MS)
-    except PWTimeout:
-        pass  # partial render — still try to parse what we have
-    return page.content()
+        return str(int(dept_code)).zfill(4)
+    except (ValueError, TypeError):
+        return str(dept_code).strip()
 
-def extract_event_data(html):
-    soup = BeautifulSoup(html, "html.parser")
 
-    def text(label):
-        el = soup.find(attrs={"data-if-label": label})
-        return el.get_text(strip=True).replace("\xa0", " ").strip() if el else ""
-
-    # Description
-    desc_el = soup.find(attrs={"data-if-label": "descriptiondetails"})
-    description = desc_el.get_text(separator="\n", strip=True) if desc_el else ""
-
-    # InFlight NLX renders UNSPSC into data-if-label="unspscCodeBody" rows.
-    # The first row uses that label directly; additional rows get data-if-cloned-from.
-    unspsc_pairs = []
-    unspsc_rows = (
-        soup.find_all("tr", attrs={"data-if-label": "unspscCodeBody"}) +
-        soup.find_all("tr", attrs={"data-if-cloned-from": "unspscCodeBody"})
+def make_session():
+    """Establish a requests.Session with an InFlightSessionID cookie via a plain GET."""
+    session = requests.Session()
+    session.headers.update({"User-Agent": UA})
+    session.get(
+        "https://caleprocure.ca.gov/pages/Events-BS3/event-search.aspx",
+        timeout=20,
     )
-    for row in unspsc_rows:
-        code_el = row.find("td", attrs={"data-if-label": "unspscClassification"})
-        desc_el = row.find("td", attrs={"data-if-label": "unspscDescription"})
-        code = code_el.get_text(strip=True) if code_el else ""
-        desc = desc_el.get_text(strip=True) if desc_el else ""
+    return session
+
+
+def fetch_results(session, body, event_id, dept, event_url):
+    """POST to the InFlight NLX API and return the CaptureResults dict.
+    Handles the 278 IFLocation redirect that NLX uses to pin to a backend node.
+    Re-establishes the session if it appears to have expired (empty results)."""
+    params = {**FIXED_PARAMS, "AUC_ID": event_id, "BUSINESS_UNIT": dept}
+    headers = {
+        "Content-Type": "application/x-www-form-urlencoded",
+        "Referer": event_url,
+        "Origin": "https://caleprocure.ca.gov",
+    }
+    resp = session.post(NLX_BASE, params=params, data=body, headers=headers, timeout=30)
+
+    if resp.status_code == 278:
+        location = resp.json().get("IFLocation", "")
+        if location.startswith("/"):
+            location = "https://caleprocure.ca.gov" + location
+        resp = session.post(location, data=body, headers=headers, timeout=30)
+
+    resp.raise_for_status()
+    return resp.json().get("CaptureResults", {})
+
+
+def leaf(nodes):
+    """Extract the text/html value from an InFlight NLX node list."""
+    if nodes:
+        props = nodes[0].get("Properties", {})
+        return (props.get("text") or props.get("html") or "").replace("\xa0", " ").strip()
+    return ""
+
+
+def extract_event_data(results):
+    unspsc_pairs = []
+    for row in results.get("unspscCodeBody", []):
+        ch = row.get("Children", {})
+        code = leaf(ch.get("unspscClassification", []))
+        desc = leaf(ch.get("unspscDescription", []))
         if code and code != "\xa0":
             unspsc_pairs.append(f"{code}: {desc}" if desc else code)
 
-    # Contractor License Types — same cloned-row pattern as UNSPSC
     contractor_licenses = []
-    contractor_rows = (
-        soup.find_all("tr", attrs={"data-if-label": "contractorTblBody"}) +
-        soup.find_all("tr", attrs={"data-if-cloned-from": "contractorTblBody"})
-    )
-    for row in contractor_rows:
-        type_el = row.find("td", attrs={"data-if-label": "contractorTblType"})
-        cdesc_el = row.find("td", attrs={"data-if-label": "contractorTblDescription"})
-        lic_type = type_el.get_text(strip=True) if type_el else ""
-        lic_desc = cdesc_el.get_text(strip=True) if cdesc_el else ""
+    for row in results.get("contractorTblBody", []):
+        ch = row.get("Children", {})
+        lic_type = leaf(ch.get("contractorTblType", []))
+        lic_desc = leaf(ch.get("contractorTblDescription", []))
         if lic_type and lic_type != "\xa0":
             contractor_licenses.append(f"{lic_type}: {lic_desc}" if lic_desc else lic_type)
 
-    # Service Area (Counties) — NLX emits one row per county with indexed labels (serviceAreaTblBody-0 … -57)
-    # plus the template row (serviceAreaTblBody), so match on prefix.
     counties = []
-    sa_rows = soup.find_all("tr", attrs={"data-if-label": re.compile(r"^serviceAreaTblBody")})
-    for row in sa_rows:
-        county_el = row.find("td", attrs={"data-if-label": "serviceAreaCounty"})
-        county = county_el.get_text(strip=True) if county_el else ""
+    service_area_ids = []
+    for row in results.get("serviceAreaTblBody", []):
+        ch = row.get("Children", {})
+        county  = leaf(ch.get("serviceAreaCounty", []))
+        area_id = leaf(ch.get("serviceAreaID", []))
         if county and county != "\xa0":
             counties.append(county)
+            service_area_ids.append(area_id)
+
+    # Pre-bid conference fields are children of the conferenceRow node
+    conf_children = {}
+    conf_row = results.get("conferenceRow", [])
+    if conf_row:
+        conf_children = conf_row[0].get("Children", {})
 
     return {
-        "description": description,
-        "unspsc_codes": "; ".join(unspsc_pairs),
+        "description":         leaf(results.get("descriptiondetails", [])),
+        "unspsc_codes":        "; ".join(unspsc_pairs),
         "contractor_licenses": "; ".join(contractor_licenses),
-        "counties": "; ".join(counties),
-        "event_version": text("eventVersion"),
-        "published_date": text("eventStartDate"),
-        "contact_phone": text("phoneText"),
-        "prebid_mandatory": text("conferenceText"),
-        "prebid_date": text("dateText"),
-        "prebid_time": text("timeText"),
-        "prebid_location": text("locationText"),
-        "prebid_comments": text("commentsText"),
+        "counties":            "; ".join(counties),
+        "service_area_ids":    "; ".join(service_area_ids),
+        "event_version":       leaf(results.get("eventVersion", [])),
+        "published_date":      leaf(results.get("eventStartDate", [])),
+        "contact_phone":       leaf(results.get("phoneText", [])),
+        "prebid_mandatory":    leaf(conf_children.get("conferenceText", [])),
+        "prebid_date":         leaf(conf_children.get("dateText", [])),
+        "prebid_time":         leaf(conf_children.get("timeText", [])),
+        "prebid_location":     leaf(conf_children.get("locationText", [])),
+        "prebid_comments":     leaf(conf_children.get("commentsText", [])),
     }
+
 
 def load_xls():
     df = pd.read_excel(XLS_PATH, header=0, engine="xlrd")
     print(f"Loaded {len(df)} rows. Columns: {df.columns.tolist()}")
     return df
 
+
+def load_template():
+    if not Path(TEMPLATE_PATH).exists():
+        sys.exit(f"ERROR: {TEMPLATE_PATH} not found — run 'python api_probe.py' first.")
+    return Path(TEMPLATE_PATH).read_text()
+
+
 def probe():
     df = load_xls()
+    body = load_template()
     row = df.iloc[0]
     dept_col, id_col = df.columns[0], df.columns[2]
-    url = build_url(row[dept_col], row[id_col])
-    print(f"Probing: {url}\n")
+    event_id  = str(row[id_col])
+    dept      = norm_dept(row[dept_col])
+    event_url = build_url(row[dept_col], event_id)
+    print(f"Probing: {event_url}\n")
 
-    with sync_playwright() as p:
-        browser, page = make_page(p)
-        html = get_rendered_html(page, url)
-        browser.close()
+    session = make_session()
+    results = fetch_results(session, body, event_id, dept, event_url)
 
-    # Save rendered HTML for inspection if needed
-    Path("probe_rendered.html").write_text(html)
-    print("Rendered HTML saved to probe_rendered.html")
+    Path("probe_response.json").write_text(json.dumps(results, indent=2))
+    print("Raw JSON saved to probe_response.json\n")
 
-    data = extract_event_data(html)
+    data = extract_event_data(results)
 
-    print("\n=== Description ===")
-    print(data["description"] or "(empty — check probe_rendered.html for the actual DOM)")
+    print("=== Description ===")
+    print(data["description"] or "(empty — check probe_response.json)")
     print("\n=== UNSPSC Codes ===")
-    print(data["unspsc_codes"] or "(none found)")
+    print(data["unspsc_codes"] or "(none)")
     print("\n=== Contractor License Types ===")
     print(data["contractor_licenses"] or "(none)")
     print("\n=== Counties (Service Area) ===")
     print(data["counties"] or "(none)")
     print("\n=== Event Details ===")
-    print(f"Version: {data['event_version']}")
-    print(f"Published Date: {data['published_date']}")
-    print(f"Contact Phone: {data['contact_phone']}")
-    print(f"Pre-Bid Mandatory: {data['prebid_mandatory']}")
-    print(f"Pre-Bid Date: {data['prebid_date']}")
-    print(f"Pre-Bid Time: {data['prebid_time']}")
+    print(f"Version:          {data['event_version']}")
+    print(f"Published Date:   {data['published_date']}")
+    print(f"Contact Phone:    {data['contact_phone']}")
+    print(f"Pre-Bid Mandatory:{data['prebid_mandatory']}")
+    print(f"Pre-Bid Date:     {data['prebid_date']}")
+    print(f"Pre-Bid Time:     {data['prebid_time']}")
     print(f"Pre-Bid Location: {data['prebid_location']}")
     print(f"Pre-Bid Comments: {data['prebid_comments']}")
 
+
 def run():
     df = load_xls()
+    body = load_template()
     dept_col, id_col = df.columns[0], df.columns[2]
     total = len(df)
     enriched = []
@@ -174,36 +211,30 @@ def run():
         enriched = existing.to_dict("records")
         print(f"Resuming — {len(done_ids)} already done, {total - len(done_ids)} remaining")
 
-    with sync_playwright() as p:
-        browser, pg = make_page(p)
+    session = make_session()
 
-        for i, row in df.iterrows():
-            event_id = str(row[id_col])
-            if event_id in done_ids:
-                continue
+    for i, row in df.iterrows():
+        event_id = str(row[id_col])
+        if event_id in done_ids:
+            continue
 
-            url = build_url(row[dept_col], event_id)
-            print(f"[{i+1}/{total}] {url}")
+        dept      = norm_dept(row[dept_col])
+        event_url = build_url(row[dept_col], event_id)
+        print(f"[{i+1}/{total}] {event_url}")
 
-            try:
-                html = get_rendered_html(pg, url)
-                extra = extract_event_data(html)
-            except Exception as e:
-                print(f"  ERROR: {e}")
-                extra = {
-                    "description": "", "unspsc_codes": "", "contractor_licenses": "",
-                    "counties": "", "event_version": "", "published_date": "",
-                    "contact_phone": "", "prebid_mandatory": "", "prebid_date": "",
-                    "prebid_time": "", "prebid_location": "", "prebid_comments": "",
-                }
+        try:
+            results = fetch_results(session, body, event_id, dept, event_url)
+            extra   = extract_event_data(results)
+        except Exception as e:
+            print(f"  ERROR: {e}")
+            extra = EMPTY_EXTRA.copy()
 
-            enriched.append({**row.to_dict(), **extra, "event_url": url})
-            pd.DataFrame(enriched).to_csv(OUTPUT_PATH, index=False)
-            time.sleep(DELAY_SECONDS)
-
-        browser.close()
+        enriched.append({**row.to_dict(), **extra, "event_url": event_url})
+        pd.DataFrame(enriched).to_csv(OUTPUT_PATH, index=False)
+        time.sleep(DELAY_SECONDS)
 
     print(f"\nDone. {len(enriched)} rows saved to {OUTPUT_PATH}")
+
 
 if __name__ == "__main__":
     cmd = sys.argv[1] if len(sys.argv) > 1 else "probe"

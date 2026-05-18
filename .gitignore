@@ -6,3 +6,5 @@ venv
 __pycache__
 .claude
 HANDOFF.md
+nlx_body.txt
+probe_response.json
