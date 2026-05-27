@@ -77,6 +77,44 @@ def fetch_page(session, url):
     return resp.text
 
 
+def _cell_after_label(soup, label_text):
+    for td in soup.find_all("td"):
+        if td.get_text(strip=True) == label_text:
+            sibling = td.find_next_sibling("td")
+            if sibling:
+                return sibling.get_text(separator=" ", strip=True).replace("\xa0", " ").strip()
+    return ""
+
+
+def _selected_radio(soup):
+    for inp in soup.find_all("input", {"type": "radio"}):
+        if inp.has_attr("checked"):
+            label = inp.find_next("label")
+            if label:
+                return label.get_text(strip=True)
+    return ""
+
+
+def extract_fields(html):
+    soup = BeautifulSoup(html, "html.parser")
+    return {
+        "department_for_solicitation": _cell_after_label(soup, "Department for this solicitation:"),
+        "date_prepared":               _cell_after_label(soup, "Date Prepared:"),
+        "advertisement_type":          _selected_radio(soup),
+        "description_full":            _cell_after_label(soup, "Description:"),
+        "delivery_location":           _cell_after_label(soup, "Delivery Location:"),
+        "duration":                    _cell_after_label(soup, "Duration:"),
+        "contact_first_name":          _cell_after_label(soup, "First Name:"),
+        "contact_last_name":           _cell_after_label(soup, "Last Name:"),
+        "contact_phone":               _cell_after_label(soup, "Phone Number:(XXX-XXX-XXXX)"),
+        "contact_email":               _cell_after_label(soup, "Email:"),
+        "solicitation_due_time":       _cell_after_label(soup, "Solicitation Due Time:"),
+        "solicitation_opening_time":   _cell_after_label(soup, "Solicitation Opening Time:"),
+        "opening_location":            _cell_after_label(soup, "Opening Location:"),
+        "no_of_addendums":             _cell_after_label(soup, "No. of Addendums:"),
+    }
+
+
 if __name__ == "__main__":
     cmd = sys.argv[1] if len(sys.argv) > 1 else "probe"
     if cmd == "probe":

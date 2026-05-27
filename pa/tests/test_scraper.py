@@ -4,7 +4,7 @@ import pandas as pd
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
-from scraper import find_input_csv, load_done_ids, build_url
+from scraper import find_input_csv, load_done_ids, build_url, extract_fields
 
 
 def test_find_input_csv_returns_most_recent(tmp_path):
@@ -48,3 +48,35 @@ def test_build_url_encodes_spaces():
         "https://emarketplace.state.pa.us/Solicitations.aspx"
         "?SID=DGS%20C-1050-0001%20Phase%201"
     )
+
+
+def test_extract_fields_returns_all_keys():
+    fixture = Path(__file__).parent / "fixtures" / "sample_solicitation.html"
+    html = fixture.read_text(encoding="utf-8")
+    result = extract_fields(html)
+    expected_keys = [
+        "department_for_solicitation", "date_prepared", "advertisement_type",
+        "description_full", "delivery_location", "duration",
+        "contact_first_name", "contact_last_name", "contact_phone", "contact_email",
+        "solicitation_due_time", "solicitation_opening_time",
+        "opening_location", "no_of_addendums",
+    ]
+    for key in expected_keys:
+        assert key in result, f"Missing key: {key}"
+
+
+def test_extract_fields_values_are_strings():
+    fixture = Path(__file__).parent / "fixtures" / "sample_solicitation.html"
+    html = fixture.read_text(encoding="utf-8")
+    result = extract_fields(html)
+    for key, val in result.items():
+        assert isinstance(val, str), f"{key} is not a string: {type(val)}"
+
+
+def test_extract_fields_no_empty_critical_fields():
+    fixture = Path(__file__).parent / "fixtures" / "sample_solicitation.html"
+    html = fixture.read_text(encoding="utf-8")
+    result = extract_fields(html)
+    assert result["description_full"] != "", "description_full should not be empty"
+    assert result["department_for_solicitation"] != "", "department_for_solicitation should not be empty"
+    assert result["contact_first_name"] != "", "contact_first_name should not be empty"
