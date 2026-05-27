@@ -52,8 +52,13 @@ def find_input_csv(directory="."):
     return files[-1]
 
 
-def load_done_ids():
-    pass
+def load_done_ids(output_path):
+    if not Path(output_path).exists():
+        return set()
+    df = pd.read_csv(output_path, dtype=str)
+    if "scrape_status" not in df.columns or "Bid No" not in df.columns:
+        return set()
+    return set(df.loc[df["scrape_status"] == "success", "Bid No"].astype(str))
 
 
 def build_url():
