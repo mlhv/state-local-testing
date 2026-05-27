@@ -154,6 +154,52 @@ def probe():
     print(f"No. of Addendums:  {fields['no_of_addendums']}")
 
 
+def run():
+    input_csv = find_input_csv(".")
+    df = pd.read_csv(input_csv, dtype=str)
+    done_ids = load_done_ids(OUTPUT_PATH)
+
+    to_scrape = df[~df["Bid No"].astype(str).isin(done_ids)]
+    total_new = len(to_scrape)
+    print(f"Input: {len(df)} rows. Already done: {len(done_ids)}. To scrape: {total_new}")
+
+    if total_new == 0:
+        print("Nothing to do.")
+        return
+
+    enriched = []
+    if Path(OUTPUT_PATH).exists():
+        enriched = pd.read_csv(OUTPUT_PATH, dtype=str).to_dict("records")
+
+    session = make_session()
+    success_count = 0
+    error_count = 0
+
+    for i, (_, row) in enumerate(to_scrape.iterrows(), 1):
+        bid_no = str(row["Bid No"])
+        url = build_url(bid_no)
+        print(f"[{i}/{total_new}] {url}")
+
+        try:
+            html = fetch_page(session, url)
+            scraped = extract_fields(html)
+            scraped["solicitation_url"] = url
+            scraped["scrape_status"] = "success"
+            success_count += 1
+        except Exception as e:
+            print(f"  ERROR: {e}")
+            scraped = EMPTY_SCRAPED.copy()
+            scraped["solicitation_url"] = url
+            scraped["scrape_status"] = "error"
+            error_count += 1
+
+        enriched.append({**row.to_dict(), **scraped})
+        pd.DataFrame(enriched).to_csv(OUTPUT_PATH, index=False)
+        time.sleep(DELAY_SECONDS)
+
+    print(f"\nDone. {success_count} succeeded, {error_count} errored. Output: {OUTPUT_PATH}")
+
+
 if __name__ == "__main__":
     cmd = sys.argv[1] if len(sys.argv) > 1 else "probe"
     if cmd == "probe":

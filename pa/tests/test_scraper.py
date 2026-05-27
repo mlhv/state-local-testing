@@ -4,7 +4,7 @@ import pandas as pd
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
-from scraper import find_input_csv, load_done_ids, build_url, extract_fields
+from scraper import find_input_csv, load_done_ids, build_url, extract_fields, SCRAPED_FIELDS
 
 
 def test_find_input_csv_returns_most_recent(tmp_path):
@@ -80,3 +80,34 @@ def test_extract_fields_no_empty_critical_fields():
     assert result["description_full"] != "", "description_full should not be empty"
     assert result["department_for_solicitation"] != "", "department_for_solicitation should not be empty"
     assert result["contact_first_name"] != "", "contact_first_name should not be empty"
+
+
+def test_output_row_has_all_columns():
+    input_row = {
+        "Bid No": "6100066078",
+        "Bid Type": "IFB",
+        "Title": "Test Solicitation",
+        "Description": "Short desc",
+        "Agency": "Dept of Corrections",
+        "County": "Wayne",
+        "Bid Start Date": "5/27/2026",
+        "Bid End Date": "6/10/2026 8:00:00 AM",
+        "Bid Open Date": "6/10/2026 10:00:00 AM",
+        "Status": "Open",
+        "Buyer Name": "Bonnie Snyder",
+        "Updated Date": "5/26/2026",
+    }
+    scraped = {k: "test_value" for k in SCRAPED_FIELDS if k not in ("scrape_status", "solicitation_url")}
+    scraped["scrape_status"] = "success"
+    scraped["solicitation_url"] = "https://www.emarketplace.state.pa.us/Solicitations.aspx?SID=6100066078"
+
+    output_row = {**input_row, **scraped}
+
+    for col in input_row:
+        assert col in output_row
+
+    for col in SCRAPED_FIELDS:
+        assert col in output_row
+
+    # 12 input + 16 scraped
+    assert len(output_row) == 28
