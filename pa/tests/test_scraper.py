@@ -35,3 +35,16 @@ def test_load_done_ids_skips_error_rows(tmp_path):
     result = load_done_ids(str(output))
     assert result == {"6100066078", "6100066071"}
     assert "6100066090" not in result
+
+
+def test_build_url_simple_id():
+    assert build_url("6100066078") == (
+        "https://emarketplace.state.pa.us/Solicitations.aspx?SID=6100066078"
+    )
+
+
+def test_build_url_encodes_spaces():
+    assert build_url("DGS C-1050-0001 Phase 1") == (
+        "https://emarketplace.state.pa.us/Solicitations.aspx"
+        "?SID=DGS%20C-1050-0001%20Phase%201"
+    )

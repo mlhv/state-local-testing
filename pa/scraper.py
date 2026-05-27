@@ -61,5 +61,5 @@ def load_done_ids(output_path):
     return set(df.loc[df["scrape_status"] == "success", "Bid No"].astype(str))
 
 
-def build_url():
-    pass
+def build_url(bid_no):
+    return f"{BASE_URL}?SID={quote(str(bid_no))}"
