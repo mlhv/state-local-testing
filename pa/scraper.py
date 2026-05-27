@@ -43,3 +43,18 @@ SCRAPED_FIELDS = [
 ]
 
 EMPTY_SCRAPED = {k: "" for k in SCRAPED_FIELDS}
+
+
+def find_input_csv(directory="."):
+    files = sorted(glob.glob(str(Path(directory) / INPUT_GLOB)))
+    if not files:
+        sys.exit(f"ERROR: No {INPUT_GLOB} found in {directory}")
+    return files[-1]
+
+
+def load_done_ids():
+    pass
+
+
+def build_url():
+    pass
