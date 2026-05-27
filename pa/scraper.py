@@ -63,3 +63,25 @@ def load_done_ids(output_path):
 
 def build_url(bid_no):
     return f"{BASE_URL}?SID={quote(str(bid_no))}"
+
+
+def make_session():
+    session = requests.Session()
+    session.headers.update({"User-Agent": UA})
+    return session
+
+
+def fetch_page(session, url):
+    resp = session.get(url, timeout=30)
+    resp.raise_for_status()
+    return resp.text
+
+
+if __name__ == "__main__":
+    cmd = sys.argv[1] if len(sys.argv) > 1 else "probe"
+    if cmd == "probe":
+        probe()
+    elif cmd == "run":
+        run()
+    else:
+        print(__doc__)
