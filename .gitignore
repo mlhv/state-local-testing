@@ -7,5 +7,5 @@ venv
 .env
 __pycache__
 .claude
-HANDOFF.md
+cali/HANDOFF.md
 probe_response.json
