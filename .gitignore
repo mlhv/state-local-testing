@@ -1,5 +1,7 @@
 events_enriched.csv
 events.xls
+pa/solicitations_enriched.csv
+pa/Solicitations-*.csv
 probe_rendered.html
 venv
 .env

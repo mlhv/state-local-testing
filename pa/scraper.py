@@ -131,7 +131,10 @@ def probe():
     print(f"Probing: {url}\n")
 
     session = make_session()
-    html = fetch_page(session, url)
+    try:
+        html = fetch_page(session, url)
+    except Exception as e:
+        sys.exit(f"ERROR fetching {url}: {e}")
     fields = extract_fields(html)
 
     print("=== General Information ===")
@@ -169,7 +172,8 @@ def run():
 
     enriched = []
     if Path(OUTPUT_PATH).exists():
-        enriched = pd.read_csv(OUTPUT_PATH, dtype=str).to_dict("records")
+        all_rows = pd.read_csv(OUTPUT_PATH, dtype=str).to_dict("records")
+        enriched = [r for r in all_rows if r.get("scrape_status") == "success"]
 
     session = make_session()
     success_count = 0

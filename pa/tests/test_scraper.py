@@ -111,3 +111,25 @@ def test_output_row_has_all_columns():
 
     # 12 input + 16 scraped
     assert len(output_row) == 28
+
+
+def test_load_done_ids_excludes_error_rows_so_run_wont_duplicate(tmp_path):
+    """Regression: error rows must be excluded from done_ids so run() retries them
+    and filters them from the enriched list — preventing duplicate Bid No in output."""
+    output = tmp_path / "solicitations_enriched.csv"
+    output.write_text(
+        "Bid No,scrape_status\n"
+        "AAA,success\n"
+        "BBB,error\n"
+    )
+    done_ids = load_done_ids(str(output))
+    # BBB is not done — it will be retried by run()
+    assert "BBB" not in done_ids
+    # Simulate what run() does: load output, keep only success rows
+    import pandas as pd
+    all_rows = pd.read_csv(str(output), dtype=str).to_dict("records")
+    enriched = [r for r in all_rows if r.get("scrape_status") == "success"]
+    # BBB's old error row is gone — no duplicate when retry row is appended
+    bid_nos = [r["Bid No"] for r in enriched]
+    assert "BBB" not in bid_nos
+    assert "AAA" in bid_nos
