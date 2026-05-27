@@ -1,0 +1,45 @@
+"""
+PA eMarketplace solicitation scraper.
+Usage:
+  python scraper.py probe   -- fetch one new solicitation and print all extracted fields
+  python scraper.py run     -- scrape all new/errored solicitations and write to CSV
+"""
+
+import glob
+import sys
+import time
+import requests
+import pandas as pd
+from pathlib import Path
+from urllib.parse import quote
+from bs4 import BeautifulSoup
+
+INPUT_GLOB = "Solicitations-*.csv"
+OUTPUT_PATH = "solicitations_enriched.csv"
+DELAY_SECONDS = 0.5
+BASE_URL = "https://emarketplace.state.pa.us/Solicitations.aspx"
+UA = (
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+    "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+)
+
+SCRAPED_FIELDS = [
+    "department_for_solicitation",
+    "date_prepared",
+    "advertisement_type",
+    "description_full",
+    "delivery_location",
+    "duration",
+    "contact_first_name",
+    "contact_last_name",
+    "contact_phone",
+    "contact_email",
+    "solicitation_due_time",
+    "solicitation_opening_time",
+    "opening_location",
+    "no_of_addendums",
+    "solicitation_url",
+    "scrape_status",
+]
+
+EMPTY_SCRAPED = {k: "" for k in SCRAPED_FIELDS}
