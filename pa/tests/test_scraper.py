@@ -39,13 +39,13 @@ def test_load_done_ids_skips_error_rows(tmp_path):
 
 def test_build_url_simple_id():
     assert build_url("6100066078") == (
-        "https://emarketplace.state.pa.us/Solicitations.aspx?SID=6100066078"
+        "https://www.emarketplace.state.pa.us/Solicitations.aspx?SID=6100066078"
     )
 
 
 def test_build_url_encodes_spaces():
     assert build_url("DGS C-1050-0001 Phase 1") == (
-        "https://emarketplace.state.pa.us/Solicitations.aspx"
+        "https://www.emarketplace.state.pa.us/Solicitations.aspx"
         "?SID=DGS%20C-1050-0001%20Phase%201"
     )
 
