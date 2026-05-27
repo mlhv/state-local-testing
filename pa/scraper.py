@@ -17,7 +17,7 @@ from bs4 import BeautifulSoup
 INPUT_GLOB = "Solicitations-*.csv"
 OUTPUT_PATH = "solicitations_enriched.csv"
 DELAY_SECONDS = 0.5
-BASE_URL = "https://emarketplace.state.pa.us/Solicitations.aspx"
+BASE_URL = "https://www.emarketplace.state.pa.us/Solicitations.aspx"
 UA = (
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
     "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"

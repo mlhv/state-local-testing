@@ -1,93 +1,889 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Solicitation Detail - PA eMarketplace</title>
-</head>
-<body>
-<div id="content">
-    <!-- General Info Section -->
-    <div class="section">
-        <h2>General Information</h2>
-        <table class="info-table">
-            <tr>
-                <td class="label">Department For Solicitation:</td>
-                <td class="value">Procurement</td>
-            </tr>
-            <tr>
-                <td class="label">Date Prepared:</td>
-                <td class="value">05/26/26</td>
-            </tr>
-            <tr>
-                <td class="label">Advertisement Type:</td>
-                <td class="value">Materials</td>
-            </tr>
-            <tr>
-                <td class="label">Description:</td>
-                <td class="value"><p>This is the full description of the solicitation. It contains detailed information about the goods or services being procured. The Department of Corrections is seeking qualified vendors to provide commercial greenhouses.</p></td>
-            </tr>
-        </table>
-    </div>
 
-    <!-- Department Info Section -->
-    <div class="section">
-        <h2>Department Information</h2>
-        <table class="info-table">
-            <tr>
-                <td class="label">Delivery Location:</td>
-                <td class="value">Sci Waymart 11 Farview Drive Waymart Pa 18472</td>
-            </tr>
-            <tr>
-                <td class="label">Duration:</td>
-                <td class="value">One Time Delivery</td>
-            </tr>
-        </table>
-    </div>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head id="ctl00_pageHead"><title>
+	PA - eMarketplace
+</title><meta id="ctl00_metaIE" http-equiv="x-ua-compatible" content="IE=EDGE" /><link rel="stylesheet" type="text/css" media="all" href="styles.css" />
+    <script type="text/javascript" src="Global.js"></script>
+    <link rel="stylesheet" type="text/css" media="all" href="calendar/calendar-blue.css" title="blue" />
+    <script type="text/javascript" src="calendar/calendar.js"></script>
+    <script type="text/javascript" src="calendar/calendar-en.js"></script>
+    <script type="text/javascript" src="calendar/calendar-setup.js"></script>
+    <script type="text/javascript" src="menu/CSScriptLib.js"></script>
 
-    <!-- Contact Info Section -->
-    <div class="section">
-        <h2>Contact Information</h2>
-        <table class="info-table">
-            <tr>
-                <td class="label">First Name:</td>
-                <td class="value">Bonnie</td>
-            </tr>
-            <tr>
-                <td class="label">Last Name:</td>
-                <td class="value">Snyder</td>
-            </tr>
-            <tr>
-                <td class="label">Phone:</td>
-                <td class="value">570-674-2717</td>
-            </tr>
-            <tr>
-                <td class="label">Email:</td>
-                <td class="value">BOSNYDER@PA.GOV</td>
-            </tr>
-        </table>
-    </div>
+    <!-- jQuery library -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+    <script src="js/jquery.blockUI.js"></script>
+    <script type="text/javascript">
 
-    <!-- Solicitation Info Section -->
-    <div class="section">
-        <h2>Solicitation Information</h2>
-        <table class="info-table">
-            <tr>
-                <td class="label">Solicitation Due Time:</td>
-                <td class="value">8:00 AM</td>
-            </tr>
-            <tr>
-                <td class="label">Solicitation Opening Time:</td>
-                <td class="value">10:00 AM</td>
-            </tr>
-            <tr>
-                <td class="label">Opening Location:</td>
-                <td class="value">Sci Dallas 1000 Follies Road Dallas Pa 18612</td>
-            </tr>
-            <tr>
-                <td class="label">Number of Addendums:</td>
-                <td class="value">0</td>
-            </tr>
-        </table>
-    </div>
+        function blockPage() {
+            $.blockUI();
+        }
+
+    </script>
+    <style id="antiClickjack">
+        body {
+            display: none !important;
+        }
+    </style>
+    <script type="text/javascript">
+        if (self === top) {
+            var antiClickjack = document.getElementById("antiClickjack");
+            antiClickjack.parentNode.removeChild(antiClickjack);
+        } else {
+            top.location = self.location;
+        }
+    </script>
+
+    
+    <title>
+        Solicitations
+    </title>
+     
+    <script type="text/javascript" src="js/jQuery.MultiFile.min.js"></script>
+    <script language="javascript" type="text/javascript">
+
+        function RunCalendarSetup() {
+            Calendar.setup(
+            {
+                inputField: "ctl00_MainBody_txtdatepre", // id of the input field
+                ifFormat: "mm/dd/yy", // format of the input field
+                button: "ctl00_MainBody_btnDatePre", // trigger for the calendar (button ID)
+                align: "Tl", // alignment (defaults to "Bl")
+                singleClick: true
+            });
+
+            Calendar.setup(
+            {
+                inputField: "ctl00_MainBody_txtbStartDate", // id of the input field
+                ifFormat: "mm/dd/yy", // format of the input field
+                button: "ctl00_MainBody_btnDateStart", // trigger for the calendar (button ID)
+                align: "Tl", // alignment (defaults to "Bl")
+                singleClick: true
+            });
+
+            Calendar.setup(
+            {
+                inputField: "ctl00_MainBody_txtbEndDate", // id of the input field
+                ifFormat: "mm/dd/yy", // format of the input field
+                button: "ctl00_MainBody_btnDateEnd", // trigger for the calendar (button ID)
+                align: "Tl", // alignment (defaults to "Bl")
+                singleClick: true
+            });
+
+            Calendar.setup(
+            {
+                inputField: "ctl00_MainBody_txtbOpenDate", // id of the input field
+                ifFormat: "mm/dd/yy", // format of the input field
+                button: "ctl00_MainBody_btnDateOpen", // trigger for the calendar (button ID)
+                align: "Tl", // alignment (defaults to "Bl")
+                singleClick: true
+            });
+        }
+
+        function textboxMultilineMaxNumber(txt, maxLen) {
+            try {
+                if (txt.value.length > (maxLen - 1)) return false;
+            } catch (e) {
+            }
+        }
+
+        function ConfirmCancel(val) {
+            var valChecked = val.checked;
+            if (valChecked)
+                return confirm("Are you sure you want to cancel your solicitation? Once cancelled, it will not be editable. Click OK, then click Publish at the bottom of the screen to Cancel. ");
+        }
+
+        function EnsureCheckboxNotBound(checkID, originallyChecked) {
+            var check = document.getElementById(checkID);
+            check.checked = originallyChecked;
+        }
+
+        function VerifyProtectedCheckbox(checkID, Error) {
+            var check = document.getElementById(checkID);
+            if (!check.checked) {
+                alert(Error);
+                check.focus();
+                return false;
+            }
+            return true;
+        }
+
+        function ConfirmFileDelete(form) {
+            if (confirm("Are you sure you want to delete the selected files?  Click OK to Delete or CANCEL to stop.")) {
+  
+                return true;
+            } else {
+                return false;
+            }
+        }
+
+        function DirectResultMessage(message) {
+            alert(message);
+            return;
+        }
+
+        function checkSB(boxchanged)
+        {
+            var sbr = document.getElementById('ctl00_MainBody_chkSBR');
+            var sbg = document.getElementById('ctl00_MainBody_chkSBG');
+            if (boxchanged == 'sbr') {
+                if ($(sbr).is(":checked")) {
+                    sbg.checked = false;
+                }
+            }
+            else {
+                if ($(sbg).is(":checked")) {
+                    sbr.checked = false;
+                }
+            }
+        }
+    </script>
+<style type="text/css">.Column1 { width:29%; }
+.Column2 { width:24%; }
+.Column3 { width:26%; }
+.Column4 { width:21%; }</style></head>
+<body id="ctl00_pageBody" bgcolor="#F3F3F5" text="#333333" link="#333333" vlink="#333333" alink="#333333" onLoad="preloadImages();">
+
+    <form method="post" action="./Solicitations.aspx?SID=6100066007" id="aspnetForm">
+<div class="aspNetHidden">
+<input type="hidden" name="__EVENTTARGET" id="__EVENTTARGET" value="" />
+<input type="hidden" name="__EVENTARGUMENT" id="__EVENTARGUMENT" value="" />
+<input type="hidden" name="__LASTFOCUS" id="__LASTFOCUS" value="" />
+<input type="hidden" name="__VIEWSTATE" id="__VIEWSTATE" value="/wEPDwUKLTk2MDQwNDUyNA8WBB4IUmVjb3JkTm8oKVlTeXN0ZW0uSW50NjQsIG1zY29ybGliLCBWZXJzaW9uPTQuMC4wLjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49Yjc3YTVjNTYxOTM0ZTA4OQU3MDU1NR4TVmFsaWRhdGVSZXF1ZXN0TW9kZQIBFgJmD2QWBAIBD2QWAgIBDxYCHgdjb250ZW50BQdJRT1FREdFZAIDDxYCHgZvbkxvYWQFEHByZWxvYWRJbWFnZXMoKTsWAgIBD2QWCGYPDxYCHgRUZXh0BaYBPGEgdGl0bGU9J1BBIGVNYXJrZXRwbGFjZScgaHJlZj0naHR0cDovL3d3dy5lbWFya2V0cGxhY2Uuc3RhdGUucGEudXMvJz48aW1nIHNyYz0naW1hZ2VzL3BhZW1hcmtldC5qcGcnIGFsdD0nUEEgZU1hcmtldHBsYWNlJyBoZWlnaHQ9JzQ3JyB3aWR0aD0nMjEyJyBib3JkZXI9JzAnIC8+PC9hPmRkAgEPZBYEAgcPDxYCHwRlZGQCCQ8PFgIfBGVkZAICDw8WBh4JRm9yZUNvbG9yCqQBHwQFDVNvbGljaXRhdGlvbnMeBF8hU0ICBGRkAgcPZBZ+Ag0PDxYCHwQFC1Byb2N1cmVtZW50ZGQCEQ9kFgICAQ8PFgIfBAUIMDUvMDUvMjZkZAITDw8WAh8EBQgwNS8wNS8yNmRkAhUPZBYCAgEPEA8WBh4NRGF0YVRleHRGaWVsZAUJU2hvcnREZXNjHg5EYXRhVmFsdWVGaWVsZAUJU2hvcnREZXNjHgtfIURhdGFCb3VuZGdkEBUMAAdDT1NUQVJTA0lGQgNJVFEGUjMtUkZRA1JGQQRSRkVJBFJGR0EDUkZJA1JGUAlSRlFVQUwtUDMDU0ZQFQwAB0NPU1RBUlMDSUZCA0lUUQZSMy1SRlEDUkZBBFJGRUkEUkZHQQNSRkkDUkZQCVJGUVVBTC1QMwNTRlAUKwMMZ2dnZ2dnZ2dnZ2dnFgECAmQCFw8PFgIfBAUDSUZCZGQCGQ8QZBAVBgdTZXJ2aWNlCU1hdGVyaWFscxNTZXJ2aWNlICYgTWF0ZXJpYWxzD1BXIENvbnN0cnVjdGlvbhNBZ2VuY3kgQ29uc3RydWN0aW9uC1JlYWwgRXN0YXRlFQYBMQIxMAE5AjEyATMBNBQrAwZnZ2dnZ2cWAWZkAhsPDxYEHwQFB1NlcnZpY2UeB1Zpc2libGVoZGQCHQ9kFgICAQ9kFgICAQ9kFgICAQ8QZGQWAGQCHw9kFgICAQ8PFgIfBAUKNjEwMDA2NjAwN2RkAiEPDxYCHwQFCjYxMDAwNjYwMDdkZAIjD2QWAgIBDw8WAh8EBQ5TTFVER0UgUkVNT1ZBTGRkAiUPDxYCHwQFDlNMVURHRSBSRU1PVkFMZGQCJw9kFgICAQ8PFgIfBAWVAVNsdWRnZSBSZW1vdmFsIFNlcnZpY2VzIGFyZSBiZWluZyBzb2xpY2l0YXRlZCBmb3IgQ2xhcmtzIFN1bW1pdCBTdGF0ZSBIb3NwaXRhbCAo4oCcQ1NTSOKAnSkgbG9jYXRlZCBhdCAxNDUxIEhpbGxzaWRlIERyaXZlLCBDbGFya3MgU3VtbWl0LCBQQSAgMTg0MTEuZGQCKQ8PFgIfBAWaAVNsdWRnZSBSZW1vdmFsIFNlcnZpY2VzIGFyZSBiZWluZyBzb2xpY2l0YXRlZCBmb3IgQ2xhcmtzIFN1bW1pdCBTdGF0ZSBIb3NwaXRhbCAo4oCcQ1NTSOKAnSkgbG9jYXRlZCBhdCAxNDUxIEhpbGxzaWRlIERyaXZlLCBDbGFya3MgU3VtbWl0LCBQQSZuYnNwOyAxODQxMS5kZAIrD2QWAgIBD2QWAgIBD2QWAgIBDw8WAh8EBQU0MDAwMGRkAi8PZBYCAgEPEA8WBh8HBQdEZXBOYW1lHwgFB0FnX0NvZGUfCWdkEBVQABJBbGwgVXNpbmcgQWdlbmNpZXMeQ2FwaXRvbCBQcmVzZXJ2YXRpb24gQ29tbWl0dGVlG0NlbnRlciBmb3IgSnV2ZW5pbGUgSnVzdGljZRJDb21tb253ZWFsdGggQ291cnQGQ291cnRzE0RlcGFydG1lbnQgb2YgQWdpbmcaRGVwYXJ0bWVudCBvZiBBZ3JpY3VsdHVyZSAkRGVwYXJ0bWVudCBvZiBCYW5raW5nIGFuZCBTZWN1cml0aWVzMERlcGFydG1lbnQgb2YgQ29tbXVuaXR5IGFuZCBFY29ub21pYyBEZXZlbG9wbWVudDBEZXBhcnRtZW50IG9mIENvbnNlcnZhdGlvbiBhbmQgTmF0dXJhbCBSZXNvdXJjZXMZRGVwYXJ0bWVudCBvZiBDb3JyZWN0aW9ucydEZXBhcnRtZW50IG9mIERydWcgYW5kIEFsY29ob2wgUHJvZ3JhbXMXRGVwYXJ0bWVudCBvZiBFZHVjYXRpb24mRGVwYXJ0bWVudCBvZiBFbnZpcm9ubWVudGFsIFByb3RlY3Rpb24eRGVwYXJ0bWVudCBvZiBHZW5lcmFsIFNlcnZpY2VzFERlcGFydG1lbnQgb2YgSGVhbHRoKERlcGFydG1lbnQgb2YgSHVtYW4gU2VydmljZXMgInByaW9yIERQVyIgRGVwYXJ0bWVudCBvZiBMYWJvciBhbmQgSW5kdXN0cnkrRGVwYXJ0bWVudCBvZiBNaWxpdGFyeSBhbmQgVmV0ZXJhbnMgQWZmYWlycxVEZXBhcnRtZW50IG9mIFJldmVudWUTRGVwYXJ0bWVudCBvZiBTdGF0ZSFEZXBhcnRtZW50IG9mIHRoZSBBdWRpdG9yIEdlbmVyYWwcRGVwYXJ0bWVudCBvZiBUcmFuc3BvcnRhdGlvbhtFbnZpcm9ubWVudGFsIEhlYXJpbmcgQm9hcmQRR292ZXJub3IncyBPZmZpY2UuR292ZXJub3JzIE9mZmljZSBmb3IgTWFuYWdlbWVudCAmIFByb2R1Y3Rpdml0eSBIaXN0b3JpY2FsIGFuZCBNdXNldW0gQ29tbWlzc2lvbhhIb3VzZSBvZiBSZXByZXNlbnRhdGl2ZXMoSW5kZXBlbmRlbnQgUmVndWxhdG9yeSBSZXZpZXcgQ29tbWlzc2lvbhRJbnN1cmFuY2UgRGVwYXJ0bWVudBZKdWRpY2lhbCBDb25kdWN0IEJvYXJkJkxlZ2lzbGF0aXZlIEFnZW5jeSBvZiBHZW5lcmFsIEFzc2VtYmx5KExlZ2lzbGF0aXZlIEJ1ZGdldCBhbmQgRmluYW5jZSBDb21taXR0ZWUaTGVnaXNsYXRpdmUgU2VydmljZSBBZ2VuY3kSTGluY29sbiBVbml2ZXJzaXR5FExpcXVvciBDb250cm9sIEJvYXJkFE1pbGsgTWFya2V0aW5nIEJvYXJkK011bmkgUG9saWNlIE9mZmljZXIgRWR1IFRyYWluaW5nIENvbW1pc3Npb24yT2ZmaWNlIG9mIEFkbWluaXN0cmF0aW9uICh1bmRlciBHb3Zlcm5vcidzIE9mZmljZSkaT2ZmaWNlIG9mIEF0dG9ybmV5IEdlbmVyYWwZT2ZmaWNlIG9mIEdlbmVyYWwgQ291bnNlbBtPZmZpY2Ugb2YgSW5zcGVjdG9yIEdlbmVyYWwdT2ZmaWNlIG9mIExpZXV0ZW5hbnQgR292ZXJub3IuT2ZmaWNlIG9mIHRoZSBCdWRnZXQgKHVuZGVyIEdvdmVybm9yJ3MgT2ZmaWNlKS9QQSBIZWFsdGggSW5zdXJhbmNlIEV4Y2hhbmdlIEF1dGhvcml0eSAoUGVubmllKRlQQSBTdGF0ZSBTeXMgb2YgSGlnaGVyIEVkFVBlbm4gU3RhdGUgVW5pdmVyc2l0eSpQZW5uc3lsdmFuaWEgQm9hcmQgb2YgUHJvYmF0aW9uIGFuZCBQYXJvbGUwUGVubnN5bHZhbmlhIENvbW1pc3Npb24gb24gQ3JpbWUgYW5kIERlbGlucXVlbmN5IFBlbm5zeWx2YW5pYSBDb3VuY2lsIG9uIHRoZSBBcnRzKlBlbm5zeWx2YW5pYSBlSGVhbHRoIFBhcnRuZXJzaGlwIEF1dGhvcml0eShQZW5uc3lsdmFuaWEgRW1lcmdlbmN5IE1hbmFnZW1lbnQgQWdlbmN5JVBlbm5zeWx2YW5pYSBGaXNoIGFuZCBCb2F0IENvbW1pc3Npb24cUGVubnN5bHZhbmlhIEdhbWUgQ29tbWlzc2lvbiFQZW5uc3lsdmFuaWEgR2FtaW5nIENvbnRyb2wgQm9hcmQxUGVubnN5bHZhbmlhIEhlYWx0aCBDYXJlIENvc3QgQ29udGFpbm1lbnQgQ291bmNpbC9QZW5uc3lsdmFuaWEgSGlnaGVyIEVkdWNhdGlvbiBBc3Npc3RhbmNlIEFnZW5jeSNQZW5uc3lsdmFuaWEgSG91c2luZyBGaW5hbmNlIEFnZW5jeSdQZW5uc3lsdmFuaWEgSHVtYW4gUmVsYXRpb25zIENvbW1pc3Npb24wUGVubnN5bHZhbmlhIEluZnJhc3RydWN0dXJlIEludmVzdG1lbnQgQXV0aG9yaXR5KFBlbm5zeWx2YW5pYSBNdW5pY2lwYWwgUmV0aXJlbWVudCBTeXN0ZW0ZUGVubnN5bHZhbmlhIFN0YXRlIFBvbGljZSBQZW5uc3lsdmFuaWEgVHVybnBpa2UgQ29tbWlzc2lvbiRQaGlsYWRlbHBoaWEgUmVnaW9uYWwgUG9ydCBBdXRob3JpdHkqUHVibGljIFNjaG9vbCBFbXBsb3llZXMnIFJldGlyZW1lbnQgU3lzdGVtEVB1YmxpYyBUViBOZXR3b3JrGVB1YmxpYyBVdGlsaXR5IENvbW1pc3Npb24VU2VjdXJpdGllcyBDb21taXNzaW9uFlNlbmF0ZSBvZiBQZW5uc3lsdmFuaWEeU3RhdGUgQ2l2aWwgU2VydmljZSBDb21taXNzaW9uIlN0YXRlIEVtcGxveWVlcycgUmV0aXJlbWVudCBTeXN0ZW0XU3RhdGUgRXRoaWNzIENvbW1pc3Npb24mU3RhdGUgUHVibGljIFNjaG9vbCBCdWlsZGluZyBBdXRob3JpdHkcU3RhdGUgVGF4IEVxdWFsaXphdGlvbiBCb2FyZA1TdXByZW1lIENvdXJ0EVRlbXBsZSBVbml2ZXJzaXR5JlRoYWRkZXVzIFN0ZXZlbnMgQ29sbGVnZSBvZiBUZWNobm9sb2d5E1RyZWFzdXJ5IERlcGFydG1lbnQYVW5pdmVyc2l0eSBvZiBQaXR0c2J1cmdoFVABMAI0NgI1OQE0AjU3AjY3ATEBMgEzATcBOAE2AjcyAjEyATkCMTYCMTcCMzcCMTACMjACMzkCNDECNjACNDUCMTMCMjYCNTECMzECNjECNjICMTgCNjMCNjQCNTYCNjUCODECMTkCMjECNzUCMjICNDkCMjMCMjQCNjYCMjUCNzcCNTMCNzgCMzUCMjkCNTACNzMCMzACMTQCMTUCNjgCNzYCNTICNzQCMjcCMzQCMzICMzMCNTQCNjkCMzYCMjgCMzgCNDACNzEBNQI0MgI0MwI3MAI0NAI1OAI4MgI4MAI1NQI3ORQrA1BnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZxYBAhFkAjEPDxYCHwQFKERlcGFydG1lbnQgb2YgSHVtYW4gU2VydmljZXMgInByaW9yIERQVyJkZAI1D2QWAgIBDw8WAh8EBSwxNDUxIEhpbGxzaWRlIERyaXZlICBDbGFya3MgU3VtbWl0ICBQYSAxODQxMWRkAjcPDxYCHwQFTSA8Zm9udCBzaXplPScyJz4xNDUxIEhpbGxzaWRlIERyaXZlJm5ic3A7IENsYXJrcyBTdW1taXQmbmJzcDsgUGEgMTg0MTE8L2ZvbnQ+ZGQCOw9kFgQCAQ8QDxYGHwcFBkNvTmFtZR8IBQZDb0NvZGUfCWdkEBVEAAVBZGFtcwlBbGxlZ2hlbnkJQXJtc3Ryb25nBkJlYXZlcgdCZWRmb3JkBUJlcmtzBUJsYWlyCEJyYWRmb3JkBUJ1Y2tzBkJ1dGxlcgdDYW1icmlhB0NhbWVyb24GQ2FyYm9uBkNlbnRyZQdDaGVzdGVyB0NsYXJpb24KQ2xlYXJmaWVsZAdDbGludG9uCENvbHVtYmlhCENyYXdmb3JkCkN1bWJlcmxhbmQHRGF1cGhpbghEZWxhd2FyZQNFbGsERXJpZQdGYXlldHRlBkZvcmVzdAhGcmFua2xpbgZGdWx0b24GR3JlZW5lCkh1bnRpbmdkb24HSW5kaWFuYQlKZWZmZXJzb24HSnVuaWF0YQpMYWNrYXdhbm5hCUxhbmNhc3RlcghMYXdyZW5jZQdMZWJhbm9uBkxlaGlnaAdMdXplcm5lCEx5Y29taW5nBk1jS2VhbgZNZXJjZXIHTWlmZmxpbgZNb25yb2UKTW9udGdvbWVyeQdNb250b3VyC05vcnRoYW1wdG9uDk5vcnRodW1iZXJsYW5kBVBlcnJ5DFBoaWxhZGVscGhpYQRQaWtlBlBvdHRlcgpTY2h1eWxraWxsBlNueWRlcghTb21lcnNldAhTdWxsaXZhbgtTdXNxdWVoYW5uYQVUaW9nYQVVbmlvbgdWZW5hbmdvBldhcnJlbgpXYXNoaW5ndG9uBVdheW5lDFdlc3Rtb3JlbGFuZAdXeW9taW5nBFlvcmsVRAEwATEBMgEzATQBNQE2ATcBOAE5AjEwAjExAjEyAjEzAjE0AjE1AjE2AjE3AjE4AjE5AjIwAjIxAjIyAjIzAjI0AjI1AjI2AjI3AjI4AjI5AjMwAjMxAjMyAjMzAjM0AjM1AjM2AjM3AjM4AjM5AjQwAjQxAjQyAjQzAjQ0AjQ1AjQ2AjQ3AjQ4AjQ5AjUwAjUxAjUyAjUzAjU0AjU1AjU2AjU3AjU4AjU5AjYwAjYxAjYyAjYzAjY0AjY1AjY2AjY3FCsDRGdnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnFgECI2QCAw8QZGQWAGQCPQ8PFgIfBAUKTGFja2F3YW5uYWRkAkEPZBYCAgEPDxYCHwQFFFNlcHQgMjAyNiAtIEF1ZyAyMDI3ZGQCQw8PFgIfBAUUU2VwdCAyMDI2IC0gQXVnIDIwMjdkZAJFDxYCHwpnFgRmD2QWAgIBDw8WAh8KaGRkAgEPZBYEAgEPEGRkFgFmZAIDDw8WBB8EBQROb25lHwpoZGQCRw9kFgICAQ8PFgIfBAUITWFyZ2FyZXRkZAJJDw8WAh8EBQhNYXJnYXJldGRkAksPZBYCAgEPDxYCHwQFBEtpbmdkZAJNDw8WAh8EBQRLaW5nZGQCTw8PFgQfBAUMNTcwLTU4Ny03NDA2HwpoZGQCUw8PFgIfBAUMNTcwLTU4Ny03NDA2ZGQCVw8PFgQfBGUfCmhkZAJZDw8WAh8EZWRkAlsPZBYCAgEPDxYCHwQFEW1hcmdhcmVraW5AcGEuZ292ZGQCXQ8PFgIfBAURbWFyZ2FyZWtpbkBwYS5nb3ZkZAJhD2QWAgIBDw8WAh8EBQgwNS8yOS8yNmRkAmMPDxYCHwQFCDA1LzI5LzI2ZGQCZw9kFgICAQ8PFgIfBAUIMDYvMTIvMjZkZAJpDw8WAh8EBQgwNi8xMi8yNmRkAm0PZBYCAgEPDxYCHwQFBzk6MDAgQU1kZAJvDw8WAh8EBQc5OjAwIEFNZGQCcw9kFgICAQ8PFgIfBAUIMDYvMTIvMjZkZAJ1Dw8WAh8EBQgwNi8xMi8yNmRkAnkPZBYCAgEPDxYCHwQFBzk6MDEgQU1kZAJ7Dw8WAh8EBQc5OjAxIEFNZGQCfw9kFgICAQ8PFgIfBGVkZAKBAQ8PFgIfBAUXIDxmb250IHNpemU9JzInPjwvZm9udD5kZAKFAQ9kFgICAQ8PFgIfBAUBMGRkAocBDw8WAh8EBQEwZGQCiQEPZBYKAgEPEA9kFgIeB29uQ2xpY2sFG3JldHVybiBDb25maXJtQ2FuY2VsKHRoaXMpO2RkZAIDDxAPFgQeB0NoZWNrZWRnHgdFbmFibGVkaGRkZGQCBQ8PFgIfCmdkZAIJDxAPFgQfDGgfCmhkZGRkAgsPEA8WBB8MaB8KaGRkZGQCiwEPDxYCHwQFCDA1LzIxLzI2ZGQCkQEPDxYCHwpnZGQCkwEPDxYCHwQFGlJlbGF0ZWQgU29saWNpdGF0aW9uIEZpbGVzZGQClQEPDxYGHwQFFkRpc3BsYXkgRmlsZSBVcGxvYWRlcnMfDWgfCmhkZAKXAQ8PFgQeC05hdmlnYXRlVXJsBVBodHRwOi8vd3d3LmRnc3dlYi5zdGF0ZS5wYS51cy9jb21vZC9FTWFya2V0cGxhY2VcVXBsb2FkaW5nIERvY3VtZW50cyBTZWN0aW9uLnBkZh8KaGRkApkBD2QWBAIFDw8WAh8NZ2RkAh0PDxYCHw1oFgIeB29uY2xpY2sFXnRoaXMudmFsdWUgPSAnUGxlYXNlIFdhaXQnOyB0aGlzLmRpc2FibGVkID0gdHJ1ZTsgX19kb1Bvc3RCYWNrKCdjdGwwMCRNYWluQm9keSRidG5VcGxvYWQnLCcnKTtkApsBDw8WBB8NZx8KaGRkAp0BDw8WAh8KZ2QWBAIBD2QWAmYPZBYCZg88KwALAQAPFggeCERhdGFLZXlzFgAeC18hSXRlbUNvdW50AgMeCVBhZ2VDb3VudAIBHhVfIURhdGFTb3VyY2VJdGVtQ291bnQCA2QWAmYPZBYKZg8PFgIfCmhkZAIBD2QWBmYPZBYCAgEPEA8WBB8NaB8KaGRkZGQCAQ9kFgJmDw8WBh8EBTZTdGF0ZW1lbnQgb2YgV29yayAtIFNsdWRnZSBSZW1vdmFsIFNlcnZpY2UgNS4yMC4yNi5wZGYfDgV8RmlsZURvd25sb2FkLmFzcHg/ZmlsZT02MTAwMDY2MDA3L1NvbGljaXRhdGlvbl8wLnBkZiZPcmlnaW5hbEZpbGVOYW1lPVN0YXRlbWVudCBvZiBXb3JrIC0gU2x1ZGdlIFJlbW92YWwgU2VydmljZSA1LjIwLjI2LnBkZh4GVGFyZ2V0BQZfYmxhbmtkZAICDw8WAh8EBQYxMTA3NTFkZAICD2QWBmYPZBYCAgEPEA8WBB8NaB8KaGRkZGQCAQ9kFgJmDw8WBh8EBRhUZXJtcyBhbmQgQ29uZGl0aW9ucy5wZGYfDgVeRmlsZURvd25sb2FkLmFzcHg/ZmlsZT02MTAwMDY2MDA3L1NvbGljaXRhdGlvbl8xLnBkZiZPcmlnaW5hbEZpbGVOYW1lPVRlcm1zIGFuZCBDb25kaXRpb25zLnBkZh8UBQZfYmxhbmtkZAICDw8WAh8EBQYxMTA3NTJkZAIDD2QWBmYPZBYCAgEPEA8WBB8NaB8KaGRkZGQCAQ9kFgJmDw8WBh8EBTJHZW5lcmFsIENvbmRpdGlvbnMgYW5kIEluc3RydWN0aW9ucyB0byBCaWRkZXJzLnBkZh8OBXhGaWxlRG93bmxvYWQuYXNweD9maWxlPTYxMDAwNjYwMDcvU29saWNpdGF0aW9uXzIucGRmJk9yaWdpbmFsRmlsZU5hbWU9R2VuZXJhbCBDb25kaXRpb25zIGFuZCBJbnN0cnVjdGlvbnMgdG8gQmlkZGVycy5wZGYfFAUGX2JsYW5rZGQCAg8PFgIfBAUGMTEwNzUzZGQCBA8PFgIfCmhkZAICD2QWAmYPZBYCZg8PFgIfDWhkZAKfAQ8PFgIfCmhkFgQCAQ9kFgJmD2QWAmYPPCsACwBkAgIPZBYCZg9kFgJmDw8WAh8NaGRkAqEBD2QWBAIBDw8WAh8EZWRkAgMPDxYCHwRlZGQCowEPZBYEZg8QZBAVWxRCTVdCTyAtIFVuc3Vic2NyaWJlZLQCQnVyZWF1IG9mIFByb2N1cmVtZW50IC0gTWF0ZXJpYWxzIC0gMTAwMDAwMDAtTGl2ZSBQbGFudCBhbmQgQW5pbWFsIE1hdGVyaWFsIGFuZCBBY2Nlc3NvcmllcyBhbmQgU3VwcGxpZXM6ICBUaGlzIHNlZ21lbnQgaW5jbHVkZXMgbGl2ZSwgd2lsZCBhbmQgZG9tZXN0aWNhdGVkLCBzZWVkcyBhbmQgcGxhbnRzIGFuZCBhbmltYWxzLiBUaGlzIHNlZ21lbnQgYWxzbyBpbmNsdWRlcyBtYXRlcmlhbHMgYW5kIGVxdWlwbWVudCB1c2VkIGluIHRoZSBjYXJlLCBjb250YWlubWVudCBhbmQgZmVlZGluZyBvZiBsaXZlIHBsYW50cyBhbmQgYW5pbWFscy7qAkJ1cmVhdSBvZiBQcm9jdXJlbWVudCAtIE1hdGVyaWFscyAtIDExMDAwMDAwLU1pbmVyYWwgYW5kIFRleHRpbGUgYW5kIEluZWRpYmxlIFBsYW50IGFuZCBBbmltYWwgTWF0ZXJpYWxzOiAgVGhpcyBzZWdtZW50IGluY2x1ZGVzIHVucHJvY2Vzc2VkIG1hdGVyaWFscyBzdWNoIGFzIHN0b25lLCBzb2lsIGFuZCBvcmVzLCByZWZpbmVkIGJhc2Ugb3IgcHJlY2lvdXMgbWV0YWxzLCBpbmVkaWJsZSBwbGFudCwgZm9yZXN0cnkgYW5kIGFuaW1hbCBtYXRlcmlhbHMgYXMgd2VsbCBhcyBuYXR1cmFsIG9yIHN5bnRoZXRpYyBmaWJlcnMgYW5kIGNsb3RoLCBsZWF0aGVyIGFuZCBhbmltYWwgc2tpbnMsIHNjcmFwIGFuZCB3YXN0ZSBtYXRlcmlhbHMu9wFCdXJlYXUgb2YgUHJvY3VyZW1lbnQgLSBNYXRlcmlhbHMgLSAxMjAwMDAwMC1DaGVtaWNhbHMgaW5jbHVkaW5nIEJpbyBDaGVtaWNhbHMgYW5kIEdhcyBNYXRlcmlhbHM6ICBUaGlzIHNlZ21lbnQgaW5jbHVkZXMgaW5vcmdhbmljIGFuZCBvcmdhbmljIGNoZW1pY2FscyBhbmQgY29tcG91bmRzIGluIHNvbGlkLCBsaXF1aWQgb3IgZ2FzZW91cyBmb3JtIHVzZWQgaW4gYW4gaW5kdXN0cmlhbCBvciBtYW51ZmFjdHVyaW5nIHByb2Nlc3Mu7gFCdXJlYXUgb2YgUHJvY3VyZW1lbnQgLSBNYXRlcmlhbHMgLSAxMzAwMDAwMC1SZXNpbiBhbmQgUm9zaW4gYW5kIFJ1YmJlciBhbmQgRm9hbSBhbmQgRmlsbSBhbmQgRWxhc3RvbWVyaWMgTWF0ZXJpYWxzOiAgVGhpcyBzZWdtZW50IGluY2x1ZGVzIHJ1YmJlciBhbmQgcGxhc3RpYyBtYXRlcmlhbCwgaW5jbHVkaW5nIGVsYXN0b21lcnMgdGhhdCBhcmUgdXNlZCBpbiBtYW51ZmFjdHVyaW5nIGFuZCBjb25zdHJ1Y3Rpb24utwJCdXJlYXUgb2YgUHJvY3VyZW1lbnQgLSBNYXRlcmlhbHMgLSAxNDAwMDAwMC1QYXBlciBNYXRlcmlhbHMgYW5kIFByb2R1Y3RzOiAgVGhpcyBzZWdtZW50IGluY2x1ZGVzIHBhcGVyIHVzZWQgZm9yIGNvbW1lcmNpYWwgcHJpbnRpbmcsIGZvcm1zLCBlbnZlbG9wZXMsIHJlcHJvZ3JhcGhpY3MsIGFuZCB0YWJsZXRzIGFzIHdlbGwgYXMgdmFsdWUtYWRkZWQgcGFwZXJzIHdoaWNoIGZlYXR1cmUgc3BlY2lhbCBzdXJmYWNlIHRyZWF0bWVudHMsIGNvbG9yLCBjaGVtaWNhbHMsIG9yIGZpYmVyIGNvbnRlbnQgdGhhdCBtZWV0IHNwZWNpZmljIG5lZWRzLvgDQnVyZWF1IG9mIFByb2N1cmVtZW50IC0gTWF0ZXJpYWxzIC0gMTUwMDAwMDAtRnVlbHMgYW5kIEZ1ZWwgQWRkaXRpdmVzIGFuZCBMdWJyaWNhbnRzIGFuZCBBbnRpIGNvcnJvc2l2ZSBNYXRlcmlhbHM6ICBUaGlzIHNlZ21lbnQgaW5jbHVkZXMgbmF0dXJhbCBvY2N1cnJpbmcgZ2FzZXMgYW5kIHByb2Nlc3NlZCBtYXRlcmlhbHMgdXNlZCB0byBwcm9kdWNlIGhlYXQgb3IgcG93ZXIgcGVyZm9ybWFuY2UgZW5oYW5jaW5nIGFkZGl0aXZlcywgcHJvY2Vzc2VkIG1hdGVyaWFscyBkZXNpZ25lZCB0byByZWR1Y2UgZnJpY3Rpb24gYW5kIHdlYXIgd2hlbiBpbnRyb2R1Y2VkIGFzIGEgZmlsbSBiZXR3ZWVuIHNvbGlkIHN1cmZhY2VzLiBUaGlzIHNlZ21lbnQgYWxzbyBpbmNsdWRlcyBtYXRlcmlhbHMgdXNlZCB0byByZWR1Y2Ugb3IgcHJldmVudCBjb3Jyb3Npb24gb2YgbWV0YWxsaWMgc3VyZmFjZXMsIGFuZCBwZXRyb2xldW0tIGJhc2VkIGFuZCBzeW50aGV0aWMgd2F4ZXMgYW5kIGplbGxpZXMu+gFCdXJlYXUgb2YgUHJvY3VyZW1lbnQgLSBNYXRlcmlhbHMgLSAyMDAwMDAwMC1NaW5pbmcgYW5kIFdlbGwgRHJpbGxpbmcgTWFjaGluZXJ5IGFuZCBBY2Nlc3NvcmllczogIFRoaXMgc2VnbWVudCBpbmNsdWRlcyB0aGUgbWFjaGluZXMgYW5kIGFjY2Vzc29yaWVzIG5lY2Vzc2FyeSB0byBidXJyb3cgYmVuZWF0aCB0aGUgZWFydGgncyBzdXJmYWNlIG9yIHJlbGF0ZWQgcHJvY2Vzc2VzIGZvciBvYnRhaW5pbmcgYSBuYXR1cmFsIGVsZW1lbnQukQJCdXJlYXUgb2YgUHJvY3VyZW1lbnQgLSBNYXRlcmlhbHMgLSAyMTAwMDAwMC1GYXJtaW5nIGFuZCBGaXNoaW5nIGFuZCBGb3Jlc3RyeSBhbmQgV2lsZGxpZmUgTWFjaGluZXJ5IGFuZCBBY2Nlc3NvcmllczogIFRoaXMgc2VnbWVudCBpbmNsdWRlcyBtYWNoaW5lcyBhbmQgYWNjZXNzb3JpZXMgbmVjZXNzYXJ5IHRvIGN1bHRpdmF0ZSBhbmQgcHJlc2VydmUgc29pbCwgdHJlZXMsIHBsYW50cyBhcyB3ZWxsIGFzIHRob3NlIG5lY2Vzc2FyeSBmb3IgYnJlZWRpbmcgb2YgYW5pbWFscy7qAUJ1cmVhdSBvZiBQcm9jdXJlbWVudCAtIE1hdGVyaWFscyAtIDIyMDAwMDAwLUJ1aWxkaW5nIGFuZCBDb25zdHJ1Y3Rpb24gTWFjaGluZXJ5IGFuZCBBY2Nlc3NvcmllczogIFRoaXMgc2VnbWVudCBpbmNsdWRlcyB0aGUgbWFjaGluZXMgYW5kIGFjY2Vzc29yaWVzIHVzZWQgaW4gc3VwcG9ydCBvZiB0aGUgY29uc3RydWN0aW9uLCByZXBhaXIgYW5kIG1haW50ZW5hbmNlIG9mIHN0cnVjdHVyZXMgYW5kIHJvYWRzLoEDQnVyZWF1IG9mIFByb2N1cmVtZW50IC0gTWF0ZXJpYWxzIC0gMjMwMDAwMDAtSW5kdXN0cmlhbCBNYW51ZmFjdHVyaW5nIGFuZCBQcm9jZXNzaW5nIE1hY2hpbmVyeSBhbmQgQWNjZXNzb3JpZXM6ICBUaGlzIHNlZ21lbnQgaW5jbHVkZXMgdGhlIG1hY2hpbmVzIGFuZCBhY2Nlc3NvcmllcyBuZWNlc3NhcnkgdG8gbWFudWZhY3R1cmUgb3IgcHJvY2VzcyBwcm9kdWN0cyBvciBjb21wb25lbnRzLiBUaGlzIHNlZ21lbnQgYWxzbyBpbmNsdWRlcyBtYWNoaW5lcnkgYW5kIGVxdWlwbWVudCBmb3IgbWFudWZhY3R1cmluZyBhbmQgcHJvY2Vzc2luZyBvZiBmb29kIGFuZCBiZXZlcmFnZXMsIHRleHRpbGUsIGxlYXRoZXJzIGFuZCBmYWJyaWNzIGFuZCwgbGFwaWRhcnkgZXF1aXBtZW50LtQCQnVyZWF1IG9mIFByb2N1cmVtZW50IC0gTWF0ZXJpYWxzIC0gMjQwMDAwMDAtTWF0ZXJpYWwgSGFuZGxpbmcgYW5kIENvbmRpdGlvbmluZyBhbmQgU3RvcmFnZSBNYWNoaW5lcnkgYW5kIHRoZWlyIEFjY2Vzc29yaWVzIGFuZCBTdXBwbGllczogIFRoaXMgc2VnbWVudCBpbmNsdWRlcyB0aGUgbWFjaGluZXMsIGFjY2Vzc29yaWVzLCBhbmQgc3VwcGxpZXMgbmVjZXNzYXJ5IGZvciBtYXRlcmlhbCBjb252ZXlhbmNlLCBsaWZ0aW5nLCByb3RhdGluZywgdGlsdGluZyBhbmQgdHVybmluZyBhbmQgdGhlIHNhZmVrZWVwaW5nIG9mIGdvb2RzIGluIGEgZGVwb3NpdG9yeSBzdWNoIGFzIGEgd2FyZWhvdXNlLvsDQnVyZWF1IG9mIFByb2N1cmVtZW50IC0gTWF0ZXJpYWxzIC0gMjUwMDAwMDAtQ29tbWVyY2lhbCBhbmQgTWlsaXRhcnkgYW5kIFByaXZhdGUgVmVoaWNsZXMgYW5kIHRoZWlyIEFjY2Vzc29yaWVzIGFuZCBDb21wb25lbnRzOiAgVGhpcyBzZWdtZW50IGluY2x1ZGVzIHZlaGljbGVzIHVzZWQgaW4gdGhlIGNvbnZleWFuY2Ugb2YgcGVyc29ucyBvciBtYXRlcmlhbHMsIHN1Y2ggYXMgYXV0b21vdGl2ZSB2ZWhpY2xlcywgc3BhY2VjcmFmdCwgbWFyaW5lIGNyYWZ0LCBwb3dlcmVkIGFpcmNyYWZ0LCBtb3Rvcml6ZWQgY3ljbGVzIGFuZCByYWlsIGJvdW5kIHZlaGljbGVzLCBhcyB3ZWxsIGFzIHJlY3JlYXRpb25hbCBtb3Rvcml6ZWQgYW5kIG5vbi1tb3Rvcml6ZWQgY3JhZnQuIFRoaXMgc2VnbWVudCBhbHNvIGluY2x1ZGVzIGNvbXBvbmVudHMsIGFjY2Vzc29yaWVzIGFuZCBzeXN0ZW1zIHVzZWQgaW4gdGhlIHJlcGFpciwgbWFpbnRlbmFuY2UgYW5kIHN1cHBvcnQgb2YgdGhlc2UgdmVoaWNsZXMu7gNCdXJlYXUgb2YgUHJvY3VyZW1lbnQgLSBNYXRlcmlhbHMgLSAyNjAwMDAwMC1Qb3dlciBHZW5lcmF0aW9uIGFuZCBEaXN0cmlidXRpb24gTWFjaGluZXJ5IGFuZCBBY2Nlc3NvcmllczogIFRoaXMgc2VnbWVudCBpbmNsdWRlcyBtYWNoaW5lcnkgZm9yIGNvbnZlcnRpbmcgYW55IG9mIHZhcmlvdXMgZm9ybXMgb2YgZW5lcmd5IGludG8gbWVjaGFuaWNhbCBmb3JjZSBvciBjb252ZXJ0aW5nIG1lY2hhbmljYWwgZm9yY2UgaW50byBlbGVjdHJpY2l0eS4gVGhpcyBzZWdtZW50IGFsc28gaW5jbHVkZXMgbWVjaGFuaXNtcyB1c2VkIHRvIHRyYW5zbWl0IHBvd2VyIGZyb20gYW4gZW5naW5lIHRvIGFuIGFjdHVhdG9yIGFuZCBzeXN0ZW1zIGFuZCBjb21wb25lbnRzIHVzZWQgaW4gdGhlIGRpc3RyaWJ1dGlvbiBvZiBlbGVjdHJpY2FsIGFuZCBtZWNoYW5pY2FsIGVuZXJneSBzdWNoIGFzIG1vdG9ycywgZ2VuZXJhdG9ycywgdHJhbnNmb3JtZXJzIGFuZCB0cmFuc21pc3Npb25zLqACQnVyZWF1IG9mIFByb2N1cmVtZW50IC0gTWF0ZXJpYWxzIC0gMjcwMDAwMDAtVG9vbHMgYW5kIEdlbmVyYWwgTWFjaGluZXJ5OiAgVGhpcyBzZWdtZW50IGluY2x1ZGVzIGhhbmQgaGVsZCBkZXZpY2VzIGFzIHdlbGwgYXMgc21hbGwgb3IgbXVsdGlwdXJwb3NlIHBuZXVtYXRpYywgaHlkcmF1bGljLCBtZWNoYW5pY2FsLCBlbGVjdHJpY2FsIG9yIGVsZWN0cm9uaWNhbGx5IG9wZXJhdGVkIGRldmljZXMgdXNlZCBpbiB0aGUgbWFudWZhY3R1cmUsIHJlcGFpciBhbmQgbWFpbnRlbmFuY2Ugb2YgcHJvZHVjdHMuywNCdXJlYXUgb2YgUHJvY3VyZW1lbnQgLSBNYXRlcmlhbHMgLSAzMDAwMDAwMC1TdHJ1Y3R1cmVzIGFuZCBCdWlsZGluZyBhbmQgQ29uc3RydWN0aW9uIGFuZCBNYW51ZmFjdHVyaW5nIENvbXBvbmVudHMgYW5kIFN1cHBsaWVzOiAgVGhpcyBzZWdtZW50IGluY2x1ZGVzIGNvbXBvbmVudHMsIG1hdGVyaWFscyBhbmQgc3lzdGVtcyB1c2VkIGluIHRoZSBjb25zdHJ1Y3Rpb24sIHJlcGFpciBhbmQgbWFpbnRlbmFuY2Ugb2Ygc3RydWN0dXJlcyBhbmQgcm9hZHMuIFRoaXMgc2VnbWVudCBhbHNvIGluY2x1ZGVzIHN0cnVjdHVyYWwgc2hhcGVzLCBwcmVmYWJyaWNhdGVkIHN0cnVjdHVyZXMsIGludGVyaW9yIGFuZCBleHRlcmlvciBmaW5pc2hpbmcgcHJvZHVjdHMsIGVsZWN0cmljYWwgYW5kIHBsdW1iaW5nIGZpeHR1cmVzIGFzIHdlbGwgYXMgbHVtYmVyLCBidWlsZGluZyBjb21wb25lbnRzIGFuZCBjb25jcmV0ZS6BBEJ1cmVhdSBvZiBQcm9jdXJlbWVudCAtIE1hdGVyaWFscyAtIDMxMDAwMDAwLU1hbnVmYWN0dXJpbmcgQ29tcG9uZW50cyBhbmQgU3VwcGxpZXM6ICBUaGlzIHNlZ21lbnQgaW5jbHVkZXMgY29tcG9uZW50cyBhbmQgc3VwcGxpZXMgY29tbW9ubHkgdXNlZCBvciBjb25zdW1lZCBpbiBtYW51ZmFjdHVyaW5nIGFuZCBjb25zdHJ1Y3Rpb24gcHJvY2Vzc2VzLiBUaGlzIHNlZ21lbnQgYWxzbyBpbmNsdWRlcyBpbmR1c3RyaWFsIGdvb2RzIHN1Y2ggYXMgY2FzdGluZ3MsIGZvcmdpbmdzIGFuZCBleHRydXNpb25zLCBmYXN0ZW5lcnMsIGJlYXJpbmdzLCBidXNoaW5ncywgaW5kdXN0cmlhbCB3aGVlbHMsIHNwcm9ja2V0cywgZ2VhcnMsIGdhc2tldHMsIHNlYWxzIGFuZCBzcHJpbmdzLiBUaGlzIHNlZ21lbnQgYWxzbyBpbmNsdWRlcyBhYnJhc2l2ZXMsIGluZHVzdHJpYWwgYWRoZXNpdmVzLCBzZWFsYW50cyBhbmQgc29sdmVudHMgYXMgd2VsbCBhcyBwYWludHMsIHByaW1lcnMsIGZpbmlzaGVzIGFuZCBkeWVzLoADQnVyZWF1IG9mIFByb2N1cmVtZW50IC0gTWF0ZXJpYWxzIC0gMzIwMDAwMDAtRWxlY3Ryb25pYyBDb21wb25lbnRzIGFuZCBTdXBwbGllczogIFRoaXMgc2VnbWVudCBpbmNsdWRlcyBlbGVjdHJvbmljIGNvbXBvbmVudHMgdXNlZCAob3IgY29uc3VtZWQpIGluIHRoZSBtYW51ZmFjdHVyaW5nIGFuZCBtYWludGVuYW5jZSBvZiBlbGVjdHJvbmljIG9yIGVsZWN0cm8tbWVjaGFuaWNhbCBkZXZpY2VzIGFuZCBzeXN0ZW1zLiBFeGFtcGxlcyBvZiBjb21tb2RpdGllcyBmb3VuZCB3aXRoaW4gdGhpcyBzZWdtZW50IGluY2x1ZGUgc2VtaWNvbmR1Y3RvcnMsIGludGVncmF0ZWQgY2lyY3VpdHMsIGNpcmN1aXQgY2FyZCBhc3NlbWJsaWVzIGFuZCBsaWdodCBlbWl0dGluZyBkaW9kZXMuygFCdXJlYXUgb2YgUHJvY3VyZW1lbnQgLSBNYXRlcmlhbHMgLSAzOTAwMDAwMC1FbGVjdHJpY2FsIFN5c3RlbXMgYW5kIExpZ2h0aW5nIGFuZCBDb21wb25lbnRzIGFuZCBBY2Nlc3NvcmllcyBhbmQgU3VwcGxpZXM6ICBUaGlzIHNlZ21lbnQgaW5jbHVkZXMgbGlnaHRpbmcgZml4dHVyZXMgYW5kIGVsZWN0cmljYWwgY29tcG9uZW50cyBhbmQgc3VwcGxpZXMu0gJCdXJlYXUgb2YgUHJvY3VyZW1lbnQgLSBNYXRlcmlhbHMgLSA0MDAwMDAwMC1EaXN0cmlidXRpb24gYW5kIENvbmRpdGlvbmluZyBTeXN0ZW1zIGFuZCBFcXVpcG1lbnQgYW5kIENvbXBvbmVudHM6ICBUaGlzIHNlZ21lbnQgaW5jbHVkZXMgc3lzdGVtcywgZGV2aWNlcyBhbmQgY29tcG9uZW50cyB1c2VkIHRvIGNvbnRyb2wgdGhlIG1vdmVtZW50IG9yIGNvbmRpdGlvbmluZyBvZiBhaXIsIGdhc2VzIG9yIGZsdWlkcy4gVGhpcyBzZWdtZW50IGFsc28gaW5jbHVkZXMgZXF1aXBtZW50IGFuZCBjb21wb25lbnRzIHVzZWQgaW4gcGx1bWJpbmcsIGFpciBjb29saW5nIG9yIGhlYXRpbmcgKEhWQUMpLvABQnVyZWF1IG9mIFByb2N1cmVtZW50IC0gTWF0ZXJpYWxzIC0gNDEwMDAwMDAtTGFib3JhdG9yeSBhbmQgTWVhc3VyaW5nIGFuZCBPYnNlcnZpbmcgYW5kIFRlc3RpbmcgRXF1aXBtZW50OiAgVGhpcyBzZWdtZW50IGluY2x1ZGVzIHRoZSBtYWNoaW5lcywgZXF1aXBtZW50IGFuZCB0b29scyB1c2VkIGluIGxhYm9yYXRvcmllcywgYXMgd2VsbCBhcyBtZWFzdXJpbmcsIG9ic2VydmluZyBhbmQgdGVzdGluZyBlcXVpcG1lbnQumwNCdXJlYXUgb2YgUHJvY3VyZW1lbnQgLSBNYXRlcmlhbHMgLSA0MjAwMDAwMC1NZWRpY2FsIEVxdWlwbWVudCBhbmQgQWNjZXNzb3JpZXMgYW5kIFN1cHBsaWVzOiAgVGhpcyBzZWdtZW50IGluY2x1ZGVzIHRoZSB0b29scyBhbmQgbWFjaGluZXMsIGFjY2Vzc29yaWVzIGFuZCBjb25zdW1hYmxlIHN1cHBsaWVzIHVzZWQgYnkgcGh5c2ljaWFucyBvciB0aG9zZSBpbiB0aGUgcHJhY3RpY2Ugb2YgbWVkaWNpbmUgb3IgcmVsYXRlZCBmaWVsZHMuIFRoaXMgc2VnbWVudCBhbHNvIGluY2x1ZGVzIGFzc2lzdGl2ZSBhbmQgY29ycmVjdGl2ZSBkZXZpY2VzIGZvciBwZW9wbGUgd2l0aCBkaXNhYmlsaXRpZXMuIFRoaXMgc2VnbWVudCBhbHNvIGluY2x1ZGVzIG1lZGljYWwgZXF1aXBtZW50IGFuZCBzdXBwbGllcyBmb3IgYW5pbWFscy79AkJ1cmVhdSBvZiBQcm9jdXJlbWVudCAtIE1hdGVyaWFscyAtIDQzMDAwMDAwLUluZm9ybWF0aW9uIFRlY2hub2xvZ3kgQnJvYWRjYXN0aW5nIGFuZCBUZWxlY29tbXVuaWNhdGlvbnM6ICBUaGlzIHNlZ21lbnQgaW5jbHVkZXMgY29tbXVuaWNhdGlvbnMgYW5kIGNvbXB1dGVyIGVxdWlwbWVudCBhcyB3ZWxsIGFzIHBlcmlwaGVyYWwgaW5wdXQsIG91dHB1dCBhbmQgc3RvcmFnZSBkZXZpY2VzLiBUaGlzIHNlZ21lbnQgYWxzbyBpbmNsdWRlcyBuZXR3b3JraW5nIGVxdWlwbWVudCBhbmQgZ2VuZXJhbCBjb21wdXRlciBjb21wb25lbnRzIGFuZCBzdXBwbGllcyBzdWNoIGFzIHByaW50ZXJzLCBlbGVjdHJvbmljIHN0b3JhZ2UgbWVkaWEgYW5kIGNvbm5lY3Rpb24gY2FibGVzLp8DQnVyZWF1IG9mIFByb2N1cmVtZW50IC0gTWF0ZXJpYWxzIC0gNDQwMDAwMDAtT2ZmaWNlIEVxdWlwbWVudCBhbmQgQWNjZXNzb3JpZXMgYW5kIFN1cHBsaWVzOiAgVGhpcyBzZWdtZW50IGluY2x1ZGVzIG9mZmljZSBtYWNoaW5lcywgZXF1aXBtZW50LCBhY2Nlc3NvcmllcyBhbmQgc3VwcGxpZXMgY29tbW9ubHkgdXNlZCBpbiB0aGUgY2xlcmljYWwgYW5kIGFkbWluaXN0cmF0aXZlIGZ1bmN0aW9uIG9mIGEgYnVzaW5lc3MuIEV4YW1wbGVzIGluY2x1ZGUgY2FsY3VsYXRpbmcsIGNvcHlpbmcgYW5kIG1haWwgaGFuZGxpbmcgZXF1aXBtZW50IGFzIHdlbGwgYXMgZHJhZnRpbmcgYW5kIHN0YXRpb25hcnkgc3VwcGxpZXMgYW5kIGFjY2Vzc29yaWVzIHN1Y2ggYXMgd3JpdGluZyBpbnN0cnVtZW50cyBhbmQgZGVzayBvcmdhbml6ZXJzLvECQnVyZWF1IG9mIFByb2N1cmVtZW50IC0gTWF0ZXJpYWxzIC0gNDUwMDAwMDAtUHJpbnRpbmcgYW5kIFBob3RvZ3JhcGhpYyBhbmQgQXVkaW8gYW5kIFZpc3VhbCBFcXVpcG1lbnQgYW5kIFN1cHBsaWVzOiAgVGhpcyBzZWdtZW50IGluY2x1ZGVzIHBob3RvZ3JhcGhpYyBmaWxtLCBwbGF0ZXMgJiBwYXBlciwgY2FtZXJhcywgbGVuc2VzICYgYWNjZXNzb3JpZXMsIG1pY3JvZmlsbSBlcXVpcG1lbnQsIHBob3RvZ3JhcGhpYyBzdHVkaW8gZXF1aXBtZW50LCBwaG90b2dyYXBoaWMgY2hlbWljYWxzIGFuZCBzdXBwbGllcyBhcyB3ZWxsIGFzIHByaW50aW5nIGluZHVzdHJ5IGVxdWlwbWVudCBhbmQgc3VwcGxpZXMgc3VjaCBhcyBpbmtzIGFuZCB3YXNoZXMunAJCdXJlYXUgb2YgUHJvY3VyZW1lbnQgLSBNYXRlcmlhbHMgLSA0NjAwMDAwMC1EZWZlbnNlIGFuZCBMYXcgRW5mb3JjZW1lbnQgYW5kIFNlY3VyaXR5IGFuZCBTYWZldHkgRXF1aXBtZW50IGFuZCBTdXBwbGllczogIFRoaXMgc2VnbWVudCBpbmNsdWRlcyBlcXVpcG1lbnQgYW5kIHN1cHBsaWVzIHVzZWQgaW4gZGVmZW5zZSwgbGF3IGVuZm9yY2VtZW50IGFuZCBzZWN1cml0eS4gVGhpcyBzZWdtZW50IGFsc28gaW5jbHVkZXMgZXF1aXBtZW50IGFuZCBzdXBwbGllcyBmb3IgcGVyc29uYWwgc2FmZXR5LroCQnVyZWF1IG9mIFByb2N1cmVtZW50IC0gTWF0ZXJpYWxzIC0gNDcwMDAwMDAtQ2xlYW5pbmcgRXF1aXBtZW50IGFuZCBTdXBwbGllczogIFRoaXMgc2VnbWVudCBpbmNsdWRlcyB0aGUgZXF1aXBtZW50IGFuZCBzdXBwbGllcyB1c2VkIGluIGVudmlyb25tZW50YWwgcHJvdGVjdGlvbiBhbmQgd2FzdGV3YXRlciBtYW5hZ2VtZW50IGFzIHdlbGwgYXMgaW4gdGhlIGNsZWFuaW5nIG9mIG9mZmljZXMgYW5kIGxhdmF0b3JpZXMuIFRoaXMgc2VnbWVudCBhbHNvIGluY2x1ZGVzIGNvbW1lcmNpYWwgbGF1bmRyeSBhbmQgZHJ5IGNsZWFuaW5nIGVxdWlwbWVudC6tAkJ1cmVhdSBvZiBQcm9jdXJlbWVudCAtIE1hdGVyaWFscyAtIDQ4MDAwMDAwLVNlcnZpY2UgSW5kdXN0cnkgTWFjaGluZXJ5IGFuZCBFcXVpcG1lbnQgYW5kIFN1cHBsaWVzOiAgVGhpcyBzZWdtZW50IGluY2x1ZGVzIG1hY2hpbmVyeSBhbmQgZXF1aXBtZW50IHVzZWQgaW4gYSB3aWRlIHJhbmdlIG9mIHJldGFpbCBidXNpbmVzcyBzZXJ2aWNlIGVudmlyb25tZW50cyBzdWNoIGFzIGZvb2Qgc2VydmljZSwgYmFua2luZywgZ2FtZXMgYW5kIGVudGVydGFpbm1lbnQgYW5kIG90aGVyIGNvbnN1bWVyIGdvb2RzIGFuZCBzZXJ2aWNlcy75AkJ1cmVhdSBvZiBQcm9jdXJlbWVudCAtIE1hdGVyaWFscyAtIDQ5MDAwMDAwLVNwb3J0cyBhbmQgUmVjcmVhdGlvbmFsIEVxdWlwbWVudCBhbmQgU3VwcGxpZXMgYW5kIEFjY2Vzc29yaWVzOiAgVGhpcyBTZWdtZW50IGluY2x1ZGVzIGVxdWlwbWVudCwgc3VwcGxpZXMgYW5kIGFjY2Vzc29yaWVzIHVzZWQgaW4gcmVjcmVhdGlvbmFsIGFjdGl2aXRpZXMgc3VjaCBhcyBzcG9ydHMsIGNhbXBpbmcsIGhvYmJpZXMsIHJlY3JlYXRpb25hbCBmaXNoaW5nIGFuZCBodW50aW5nLiBQbGF5Z3JvdW5kLCBmaXRuZXNzIGFuZCBzcGEgZXF1aXBtZW50IGFyZSBhbHNvIGZvdW5kIGhlcmUsIGFzIGFyZSBjb2xsZWN0aWJsZXMgKHN1Y2ggYXMgYW50aXF1ZXMpIGFuZCBhd2FyZHMu0AJCdXJlYXUgb2YgUHJvY3VyZW1lbnQgLSBNYXRlcmlhbHMgLSA1MDAwMDAwMC1Gb29kIEJldmVyYWdlIGFuZCBUb2JhY2NvIFByb2R1Y3RzOiAgVGhpcyBzZWdtZW50IGluY2x1ZGVzIGh1bWFuIGZvb2QgYW5kIGJldmVyYWdlcyBhcyB3ZWxsIGFzIGNvbmRpbWVudHMsIGNvbG9yaW5ncywgZmxhdm9yaW5ncyBhbmQgcHJlc2VydmF0aXZlcyB1c2VkIGluIHRoZSBwcmVwYXJhdGlvbiBvZiBmb29kIG9yIGJldmVyYWdlcy4gVGhpcyBzZWdtZW50IGFsc28gaW5jbHVkZXMgcGxhbnQgZXh0cmFjdHMsIG1pbmVyYWwgc3VwcGxlbWVudHMgYW5kIHZpdGFtaW5zIGZvciBodW1hbiBjb25zdW1wdGlvbi7NAUJ1cmVhdSBvZiBQcm9jdXJlbWVudCAtIE1hdGVyaWFscyAtIDUxMDAwMDAwLURydWdzIGFuZCBQaGFybWFjZXV0aWNhbCBQcm9kdWN0czogIFRoaXMgc2VnbWVudCBpbmNsdWRlcyBuYXR1cmFsIG9yIHN5bnRoZXRpYyBtYXRlcmlhbHMgYW5kIGNvbXBvdW5kcyB1c2VkIGluIHRoZSBwcmV2ZW50aW9uIG9yIHRyZWF0bWVudCBvZiBkaXNlYXNlIGluIGh1bWFucy6SAkJ1cmVhdSBvZiBQcm9jdXJlbWVudCAtIE1hdGVyaWFscyAtIDUyMDAwMDAwLURvbWVzdGljIEFwcGxpYW5jZXMgYW5kIFN1cHBsaWVzIGFuZCBDb25zdW1lciBFbGVjdHJvbmljIFByb2R1Y3RzOiAgVGhpcyBzZWdtZW50IGluY2x1ZGVzIGZsb29yIGNvdmVyaW5ncywgYmVkY2xvdGhlcywgdGFibGUgYW5kIGtpdGNoZW4gbGluZW4sIHRvd2Vscywgd2luZG93IHRyZWF0bWVudHMsIGRvbWVzdGljIGFwcGxpYW5jZXMsIGNvbnN1bWVyIGVsZWN0cm9uaWNzIGFuZCBraXRjaGVud2FyZS7VAkJ1cmVhdSBvZiBQcm9jdXJlbWVudCAtIE1hdGVyaWFscyAtIDUzMDAwMDAwLUFwcGFyZWwgYW5kIEx1Z2dhZ2UgYW5kIFBlcnNvbmFsIENhcmUgUHJvZHVjdHM6ICBUaGlzIHNlZ21lbnQgaW5jbHVkZXMgbm9uLWluZHVzdHJpYWwgY2xvdGhpbmcsIGdhcm1lbnRzIHNob2VzIG9yIGJvb3RzIGFuZCBhY2Nlc3NvcmllcyBhcyB3ZWxsIGFzIGJyaWVmY2FzZXMsIHN1aXRjYXNlcywgdHJ1bmtzIGFuZCB0cmF2ZWwgYWNjZXNzb3JpZXMuIFRoaXMgc2VnbWVudCBhbHNvIGluY2x1ZGVzIGFydGljbGVzIG9yIHByZXBhcmF0aW9ucyB1c2VkIGluIHBlcnNvbmFsIGh5Z2llbmUgYW5kIHBlcnNvbmFsIGNhcmUungJCdXJlYXUgb2YgUHJvY3VyZW1lbnQgLSBNYXRlcmlhbHMgLSA1NDAwMDAwMC1UaW1lcGllY2VzIGFuZCBKZXdlbHJ5IGFuZCBHZW1zdG9uZSBQcm9kdWN0czogIFRoaXMgc2VnbWVudCBpbmNsdWRlcyBwb3J0YWJsZSBhbmQgc3RhbmQtYWxvbmUgdGltZXBpZWNlcywgY29zbWV0aWMgYW5kIGZpbmUgamV3ZWxyeSAob2Z0ZW4gc2V0IHdpdGggZ2Vtcykgd29ybiBmb3IgcGVyc29uYWwgYWRvcm5tZW50IGFzIHdlbGwgYXMgYW5kIHByZWNpb3VzLCBzZW1pcHJlY2lvdXMsIG9yIHN5bnRoZXRpYyBzdG9uZXMuzAFCdXJlYXUgb2YgUHJvY3VyZW1lbnQgLSBNYXRlcmlhbHMgLSA1NTAwMDAwMC1QdWJsaXNoZWQgUHJvZHVjdHM6ICBUaGlzIHNlZ21lbnQgaW5jbHVkZXMgcHVibGlzaGVkIGNvcHlyaWdodCBtYXRlcmlhbCBzdWNoIGFzIHNvZnR3YXJlLCBtdXNpYywgYm9va3MsIG1hZ2F6aW5lcywgYW5kIG5ld3NwYXBlcnMsIGluIHByaW50IG9yIGVsZWN0cm9uaWMgZm9ybS6zAkJ1cmVhdSBvZiBQcm9jdXJlbWVudCAtIE1hdGVyaWFscyAtIDU2MDAwMDAwLUZ1cm5pdHVyZSBhbmQgRnVybmlzaGluZ3M6ICBUaGlzIFNlZ21lbnQgaW5jbHVkZXMgZnVybml0dXJlIHVzZWQgaW4gZG9tZXN0aWMgYXMgd2VsbCBhcyBvZmZpY2Ugb3IgYnVzaW5lc3Mgc2V0dGluZ3MuIEFkZGl0aW9uYWxseSwgZnVybml0dXJlIG9mIHRoZSBzb3J0IG9mdGVuIGZvdW5kIGluIHNjaG9vbHMgb3IgbGlicmFyaWVzIGlzIGluY2x1ZGVkIGhlcmUuIExhc3QsIGluc3RpdHV0aW9uYWwgZnVybml0dXJlIGlzIGluY2x1ZGVkIGhlcmUgYXMgd2VsbC7OA0J1cmVhdSBvZiBQcm9jdXJlbWVudCAtIE1hdGVyaWFscyAtIDYwMDAwMDAwLU11c2ljYWwgSW5zdHJ1bWVudHMgYW5kIEdhbWVzIGFuZCBUb3lzIGFuZCBBcnRzIGFuZCBDcmFmdHMgYW5kIEVkdWNhdGlvbmFsIEVxdWlwbWVudCBhbmQgTWF0ZXJpYWxzIGFuZCBBY2Nlc3NvcmllcyBhbmQgU3VwcGxpZXM6ICBUaGlzIFNlZ21lbnQgaW5jbHVkZXMgdGVhY2hpbmcgYWlkcyB1c2VkIGluIGJvdGggc2Nob29sIGFuZCBob21lIHNldHRpbmdzOyBlZHVjYXRpb25hbCBpdGVtcyBzdWNoIGFzIGRlY29yYXRpdmUgc3VwcGxpZXMgc2VlbiBpbiBzY2hvb2wgc2V0dGluZ3M7IGFuZCBhcnRzIGFuZCBjcmFmdHMgZXF1aXBtZW50IGFuZCBzdXBwbHkgaXRlbXMuIE11c2ljYWwgaW5zdHJ1bWVudHMgYW5kIGFjY2Vzc29yaWVzIGFyZSBhbHNvIGluIHRoaXMgU2VnbWVudCwgYXMgYXJlIHB1enpsZXMsIHRveXMgYW5kIGdhbWVzLsICQnVyZWF1IG9mIFByb2N1cmVtZW50IC0gU2VydmljZXMgLSA3MDAwMDAwMC1GYXJtaW5nIGFuZCBGaXNoaW5nIGFuZCBGb3Jlc3RyeSBhbmQgV2lsZGxpZmUgQ29udHJhY3RpbmcgU2VydmljZXM6ICBUaGlzIHNlZ21lbnQgaW5jbHVkZXMgc2VydmljZXMgYXNzb2NpYXRlZCB3aXRoIHRoZSBwcm9kdWN0aW9uLCBtYW5hZ2VtZW50IGFuZCBwcm90ZWN0aW9uIG9mIHBsYW50cywgc29pbCBhbmQgbGFuZCByZXNvdXJjZXMgYXMgd2VsbCBhcyB0aG9zZSByZWxhdGVkIHRvIHRoZSBicmVlZGluZyBvZiBhbmltYWxzIGFuZCBzZXJ2aWNlcyByZWxhdGVkIHRvIHdpbGRsaWZlLokBQnVyZWF1IG9mIFByb2N1cmVtZW50IC0gU2VydmljZXMgLSA3MTAwMDAwMC1NaW5pbmcgYW5kIG9pbCBhbmQgZ2FzIHNlcnZpY2VzOiAgU2VydmljZXMgcHJvdmlkZWQgdG8gdGhlIG1pbmluZyBhbmQgb2lsIGFuZCBnYXMgaW5kdXN0cmllcy73AkJ1cmVhdSBvZiBQcm9jdXJlbWVudCAtIFNlcnZpY2VzIC0gNzIwMDAwMDAtQnVpbGRpbmcgYW5kIENvbnN0cnVjdGlvbiBhbmQgTWFpbnRlbmFuY2UgU2VydmljZXM6ICBUaGlzIHNlZ21lbnQgaW5jbHVkZXMgc2VydmljZXMgYXNzb2NpYXRlZCB3aXRoIHRoZSBjb25zdHJ1Y3Rpb24gYW5kIG1haW50ZW5hbmNlIG9mIGJ1aWxkaW5ncywgc3RydWN0dXJlcyBhbmQgcm9hZHMuIFRoaXMgc2VnbWVudCBhbHNvIGluY2x1ZGVzIHRyYWRlcyBzdWNoIGFzIGdlbmVyYWwgY29udHJhY3RvcnMsIGVsZWN0cmljaWFucywgcGx1bWJlcnMsIGNhcnBlbnRlcnMsIHBhaW50ZXJzLCBhbmQgcm9vZmluZywgbGFuZHNjYXBpbmcsIGdhcmRlbmluZyBhbmQgcGVzdCBjb250cm9sLsABQnVyZWF1IG9mIFByb2N1cmVtZW50IC0gU2VydmljZXMgLSA3MzAwMDAwMC1JbmR1c3RyaWFsIFByb2R1Y3Rpb24gYW5kIE1hbnVmYWN0dXJpbmcgU2VydmljZXM6ICBUaGlzIHNlZ21lbnQgaW5jbHVkZXMgY29udHJhY3RlZCBzZXJ2aWNlcyBhc3NvY2lhdGVkIHdpdGggaW5kdXN0cmlhbCBhbmQgbWFudWZhY3R1cmluZyBwcm9jZXNzZXMu/gFCdXJlYXUgb2YgUHJvY3VyZW1lbnQgLSBTZXJ2aWNlcyAtIDc2MDAwMDAwLUluZHVzdHJpYWwgQ2xlYW5pbmcgU2VydmljZXM6ICBUaGlzIHNlZ21lbnQgaW5jbHVkZXMgc2VydmljZXMgYXNzb2NpYXRlZCB3aXRoIHdhc3Rld2F0ZXIgbWFuYWdlbWVudC4gVGhpcyBzZWdtZW50IGFsc28gaW5jbHVkZXMgaW5kdXN0cmlhbCBjbGVhbmluZyBzZXJ2aWNlcyBzdWNoIGFzIGJ1aWxkaW5nIHNpdGUgY2xlYW51cCBvciBqYW5pdG9yaWFsIHNlcnZpY2VzLvoBQnVyZWF1IG9mIFByb2N1cmVtZW50IC0gU2VydmljZXMgLSA3NzAwMDAwMC1FbnZpcm9ubWVudGFsIFNlcnZpY2VzOiAgVGhpcyBzZWdtZW50IGluY2x1ZGVzIHNlcnZpY2VzIGFzc29jaWF0ZWQgd2l0aCBlbnZpcm9ubWVudGFsIHByb3RlY3Rpb24gYW5kIG1hbmFnZW1lbnQgYXMgd2VsbCBhcyBlbnZpcm9ubWVudGFsIHNjaWVuY2UgYW5kIHRlY2hub2xvZ3kuIFRoaXMgc2VnbWVudCBhbHNvIGluY2x1ZGVzIHBvbGx1dGlvbiBjb250cm9sLqwBQnVyZWF1IG9mIFByb2N1cmVtZW50IC0gU2VydmljZXMgLSA3ODAwMDAwMC1UcmFuc3BvcnRhdGlvbiBhbmQgU3RvcmFnZSBhbmQgTWFpbCBTZXJ2aWNlczogIFRoaXMgc2VnbWVudCBpbmNsdWRlcyBzZXJ2aWNlcyBhc3NvY2lhdGVkIHdpdGggY2FyZ28gYW5kIHBlcnNvbmFsIHRyYW5zcG9ydGF0aW9uLusCQnVyZWF1IG9mIFByb2N1cmVtZW50IC0gU2VydmljZXMgLSA4MDAwMDAwMC1NYW5hZ2VtZW50IGFuZCBCdXNpbmVzcyBQcm9mZXNzaW9uYWxzIGFuZCBBZG1pbmlzdHJhdGl2ZSBTZXJ2aWNlczogIFRoaXMgc2VnbWVudCBpbmNsdWRlcyBzZXJ2aWNlcyBhc3NvY2lhdGVkIHdpdGggdGhlIG1hbmFnZW1lbnQgYW5kIGFkbWluaXN0cmF0aXZlIGZ1bmN0aW9ucyBvZiBhbiBvcmdhbml6YXRpb24gb3IgYnVzaW5lc3MuIFRoaXMgc2VnbWVudCBhbHNvIGluY2x1ZGVzIGJ1c2luZXNzIGFkbWluaXN0cmF0aW9uLCBodW1hbiByZXNvdXJjZXMsIG1hcmtldGluZywgbWFuYWdlbWVudCBjb25zdWx0aW5nLCBhbmQgcmVhbCBlc3RhdGUgc2VydmljZXMu+wJCdXJlYXUgb2YgUHJvY3VyZW1lbnQgLSBTZXJ2aWNlcyAtIDgwMTAxNTA0IFN0cmF0ZWdpYyBwbGFubmluZyBjb25zdWx0YXRpb24gc2VydmljZXM6ICBBc3Nlc3NtZW50cyBhbmQgYW5hbHlzaXMgb2YgYW4gZW50ZXJwcmlzZeKAmXMgY3VycmVudCBidXNpbmVzcyBvcGVyYXRpb25zIGFuZCBwaHlzaWNhbCBwbGFudCBwb3J0Zm9saW8sIGFuZCB0aGUgZGV2ZWxvcG1lbnQgb2YgYSBjYXBpdGFsIGludmVzdG1lbnQgcGxhbiBmb3IgcmVhbGlnbmluZyBhbmQgb3B0aW1pemluZyB0aGUgcG9ydGZvbGlvIHRvIHN1cHBvcnQgdGhlIGVudGVycHJpc2XigJlzIGZ1dHVyZSBvcGVyYXRpb25hbCBzdGF0ZSBvdXRsaW5lZCBpbiBpdHMgc3RyYXRlZ2ljIGJ1c2luZXNzIHBsYW4uqAVCdXJlYXUgb2YgUHJvY3VyZW1lbnQgLSBTZXJ2aWNlcyAtIDgwMTIwMDAwLUxlZ2FsIFNlcnZpY2VzLiAgVGhpcyBzZWdtZW50IGluY2x1ZGVzIG91dHNpZGUgY291bnNlbCBsZWdhbCBzZXJ2aWNlcyBzdWNoIGFzIGFkdmlzaW5nIGNsaWVudHMgcmVnYXJkaW5nIHRoZSBsYXc7IHByZXBhcmluZyBkb2N1bWVudHMgYW5kIGxlZ2FsIGluc3RydW1lbnRzIG9mIGFsbCBraW5kcyBmb3IgY2xpZW50cyB3aGljaCByZXF1aXJlIGEgZmFtaWxpYXJpdHkgd2l0aCBsZWdhbCBwcmluY2lwbGVzOyBhbmQgYXBwZWFyaW5nIGZvciwgcHJlcGFyaW5nIHBsZWFkaW5ncyBhbmQgb3RoZXIgZG9jdW1lbnRzLCBhbmQgbWFuYWdpbmcgYWN0aW9ucyBhbmQgcHJvY2VlZGluZ3Mgb24gYmVoYWxmIG9mLCBjbGllbnRzIGJlZm9yZSBwdWJsaWMgdHJpYnVuYWxzLiAgVGhlIGZpcm0gb3IgaW5kaXZpZHVhbCBwcm92aWRpbmcgbGVnYWwgc2VydmljZXMgbXVzdCBiZSBhIGxpY2Vuc2VkIGF0dG9ybmV5IGFkbWl0dGVkIHRvIHByYWN0aWNlIGluIFBlbm5zeWx2YW5pYSBhbmQgYmVmb3JlIGFueSBpZGVudGlmaWVkIHRyaWJ1bmFscy4gIEV4ZWN1dGl2ZSBhZ2VuY2llcyBtdXN0IHJlY2VpdmUgYXBwcm92YWwgZnJvbSB0aGUgT2ZmaWNlIG9mIEdlbmVyYWwgQ291bnNlbCBiZWZvcmUgZW5nYWdpbmcgb3V0c2lkZSBjb3Vuc2VsLucCQnVyZWF1IG9mIFByb2N1cmVtZW50IC0gU2VydmljZXMgLSA4MTAwMDAwMC1FbmdpbmVlcmluZyBhbmQgUmVzZWFyY2ggYW5kIFRlY2hub2xvZ3kgQmFzZWQgU2VydmljZXM6ICBUaGlzIHNlZ21lbnQgaW5jbHVkZXMgc2VydmljZXMgYXNzb2NpYXRlZCB3aXRoIHByb2Zlc3Npb25hbCBlbmdpbmVlcmluZywgaW5mb3JtYXRpb24gYW5kIGNvbXB1dGVyIHRlY2hub2xvZ3ksIGVjb25vbWljIGFuYWx5c2lzLCBhbmQgbWFudWZhY3R1cmluZyBwcm9kdWN0aW9uIHBsYW5uaW5nIGFuZCBjb250cm9sIGFzIHdlbGwgYXMgY2FydG9ncmFwaGljLCB3ZWF0aGVyIGZvcmVjYXN0aW5nLCBhbmQgb3RoZXIgZWFydGggc2NpZW5jZSBzZXJ2aWNlcy6CAkJ1cmVhdSBvZiBQcm9jdXJlbWVudCAtIFNlcnZpY2VzIC0gODIwMDAwMDAtRWRpdG9yaWFsIGFuZCBEZXNpZ24gYW5kIEdyYXBoaWMgYW5kIEZpbmUgQXJ0IFNlcnZpY2VzOiAgVGhpcyBzZWdtZW50IGluY2x1ZGVzIHNlcnZpY2VzIGFzc29jaWF0ZWQgd2l0aCBwcmludCBhbmQgYnJvYWRjYXN0IG1lZGlhIHN1Y2ggYXMgZWRpdG9yaWFsLCBhZHZlcnRpc2luZyBhbmQgcHVibGljIHJlbGF0aW9ucyBhcyB3ZWxsIGFzIGdyYXBoaWMgYW5kIGZpbmUgYXJ0LpUDQnVyZWF1IG9mIFByb2N1cmVtZW50IC0gU2VydmljZXMgLSA4MzAwMDAwMC1QdWJsaWMgVXRpbGl0aWVzIGFuZCBQdWJsaWMgU2VjdG9yIFJlbGF0ZWQgU2VydmljZXM6ICBUaGlzIHNlZ21lbnQgaW5jbHVkZXMgc2VydmljZXMgYXNzb2NpYXRlZCB3aXRoIHRoZSBzdXBwbHkgb2YgcG93ZXIgYW5kIHdhdGVyIGFzIHdlbGwgYXMgdGhlIHByb3Zpc2lvbiwgbWFuYWdlbWVudCBvciBlbmhhbmNlbWVudCBvZiB2b2ljZSBvciBkYXRhIGNvbW11bmljYXRpb25zIHN1Y2ggYXMgcG9zdGFsLCB0ZWxleCwgZmF4IGFuZCB0ZWxlcGhvbmUgY2hhcmdlcy4gVGhpcyBzZWdtZW50IGFsc28gaW5jbHVkZXMgdGhlIGNhYmxlIGFuZCBzYXRlbGxpdGUgdGVsZXZpc2lvbiwgaW5zdGFsbGF0aW9uIGFuZCBzZXJ2aWNlIGNoYXJnZXMu1gFCdXJlYXUgb2YgUHJvY3VyZW1lbnQgLSBTZXJ2aWNlcyAtIDg0MDAwMDAwLUZpbmFuY2lhbCBhbmQgSW5zdXJhbmNlIFNlcnZpY2VzOiAgVGhpcyBzZWdtZW50IGluY2x1ZGVzIHNlcnZpY2VzIGFzc29jaWF0ZWQgd2l0aCBmaW5hbmNlLCBiYW5raW5nLCBpbnZlc3RpbmcgYW5kIGluc3VyYW5jZS4gSW5jbHVkZWQgaW4gdGhpcyBzZWN0aW9uIGFyZSBlc2Nyb3cgc2VydmljZXMulANCdXJlYXUgb2YgUHJvY3VyZW1lbnQgLSBTZXJ2aWNlcyAtIDg1MDAwMDAwLUhlYWx0aGNhcmUgU2VydmljZXM6ICBUaGlzIHNlZ21lbnQgaW5jbHVkZXMgc2VydmljZXMgYXNzb2NpYXRlZCB3aXRoIGJvdGggcmVzZWFyY2ggYW5kIGRlbGl2ZXJ5IG9mIGhlYWx0aGNhcmUuIFRoaXMgc2VnbWVudCBhbHNvIGluY2x1ZGVzIHRyYWRpdGlvbmFsIGFuZCBhbHRlcm5hdGl2ZSBoZWFsdGhjYXJlIHByb2Zlc3Npb25hbHMgc3VjaCBhcyBkb2N0b3JzLCBudXJzZXMsIGFuZCB0aGVyYXBpc3RzIGFzIHdlbGwgYXMgc2VydmljZXMgcmVsYXRlZCB0byBhbHRlcm5hdGl2ZSBtZWRpY2luZS4gVGhpcyBzZWdtZW50IGFsc28gaW5jbHVkZXMgaG9zcGl0YWxzLCBjbGluaWNzLCBsYWIgc2VydmljZXMgYW5kIHBoYXJtYWNpc3RzLtoCQnVyZWF1IG9mIFByb2N1cmVtZW50IC0gU2VydmljZXMgLSA4NjAwMDAwMC1FZHVjYXRpb24gYW5kIFRyYWluaW5nIFNlcnZpY2VzOiAgVGhpcyBzZWdtZW50IGluY2x1ZGVzIHNlcnZpY2VzIGFzc29jaWF0ZWQgd2l0aCB0aGUgc3VwcGx5IG9mIGluZm9ybWF0aW9uIGxlYWRpbmcgdG8gYSByZWFzb25lZCB1bmRlcnN0YW5kaW5nIG9mIGEgc2NpZW5jZSwgYXJ0LCBvciB0ZWNobmlxdWUuIFRoaXMgc2VnbWVudCBhbHNvIGluY2x1ZGVzIHRoZSBzdXBwbHkgb2YgZm9ybWFsIGluc3RydWN0aW9uIG9yIHN1cGVydmlzZWQgcHJhY3RpY2UgZXNwZWNpYWxseSBpbiBhIHNraWxsLCB0cmFkZSBvciBwcm9mZXNzaW9uLtECQnVyZWF1IG9mIFByb2N1cmVtZW50IC0gU2VydmljZXMgLSA5MDAwMDAwMC1UcmF2ZWwgYW5kIEZvb2QgYW5kIExvZGdpbmcgYW5kIEVudGVydGFpbm1lbnQgU2VydmljZXM6ICBUaGlzIHNlZ21lbnQgaW5jbHVkZXMgc2VydmljZXMgYXNzb2NpYXRlZCB3aXRoIHRvdXJpc20sIHRyYXZlbCBvciBlbnRlcnRhaW5tZW50LiBUaGlzIHNlZ21lbnQgYWxzbyBpbmNsdWRlcyBzZXJ2aWNlcyBwcm92aWRlZCBieSByZXN0YXVyYW50cywgaG90ZWxzLCBtb3ZpZSB0aGVhdGVycywgY2luZW1hcyBhbmQgc3BvcnRpbmcgZXZlbnRzIGFzIHdlbGwgYXMgc3BhcywgZml0bmVzcyBhbmQgaGVhbHRoIGNsdWJzLosCQnVyZWF1IG9mIFByb2N1cmVtZW50IC0gU2VydmljZXMgLSA5MTAwMDAwMC1QZXJzb25hbCBhbmQgRG9tZXN0aWMgU2VydmljZXM6ICBUaGlzIHNlZ21lbnQgaW5jbHVkZXMgc2VydmljZXMgYXNzb2NpYXRlZCB3aXRoIHBlcnNvbmFsIGNhcmUgYW5kIGFzc2lzdGFuY2Ugc3VjaCBhcyBkb21lc3RpYyBzZXJ2aWNlIGFuZCBkYXkgYW5kIGVsZGVybHkgY2FyZSBwcm92aWRlcnMgYXMgd2VsbCBhcyBoYWlyZHJlc3NlcnMsIG1hbmljdXJpc3RzLCBhbmQgcGVkaWN1cmlzdHMuvAJCdXJlYXUgb2YgUHJvY3VyZW1lbnQgLSBTZXJ2aWNlcyAtIDkyMDAwMDAwLU5hdGlvbmFsIERlZmVuc2UgYW5kIFB1YmxpYyBPcmRlciBhbmQgU2VjdXJpdHkgYW5kIFNhZmV0eSBTZXJ2aWNlczogIFRoaXMgc2VnbWVudCBpbmNsdWRlcyBzZXJ2aWNlcyBhc3NvY2lhdGVkIHdpdGggdGhlIG1haW50ZW5hbmNlIG9mIGxhdyBhbmQgb3JkZXIgYXMgd2VsbCBhcyBwZXJzb25hbCBzYWZldHkgYW5kIHByb3BlcnR5IHByb3RlY3Rpb24uIFRoaXMgc2VnbWVudCBhbHNvIGluY2x1ZGVzIG1pbGl0YXJ5IHNlcnZpY2UgYW5kIGZpcmUgZmlnaHRpbmcgc2VydmljZXMuuwJCdXJlYXUgb2YgUHJvY3VyZW1lbnQgLSBTZXJ2aWNlcyAtIDkzMDAwMDAwLVBvbGl0aWNzIGFuZCBDaXZpYyBBZmZhaXJzIFNlcnZpY2VzOiAgVGhpcyBzZWdtZW50IGluY2x1ZGVzIHNlcnZpY2VzIGFzc29jaWF0ZWQgd2l0aCB0aGUgcmVwcmVzZW50YXRpb24gYW5kIGFkdmFuY2VtZW50IG9mIGN1bHR1cmUsIGNvbW11bml0eSBvciBzb2NpYWwgaW50ZXJlc3RzIHRocm91Z2ggZWl0aGVyIHB1YmxpYyBvciBwcml2YXRlIHByb2dyYW1zLiBUaGlzIHNlZ21lbnQgYWxzbyBpbmNsdWRlcyByZWZ1Z2VlIGFzc2lzdGFuY2UgYW5kIGRpc2FzdGVyIHJlbGllZi7LAkJ1cmVhdSBvZiBQcm9jdXJlbWVudCAtIFNlcnZpY2VzIC0gOTQwMDAwMDAtT3JnYW5pemF0aW9ucyBhbmQgQ2x1YnM6ICBUaGlzIHNlZ21lbnQgaW5jbHVkZXMgcmVwcmVzZW50YXRpb24gc2VydmljZXMgcHJvdmlkZWQgYnkgb3JnYW5pemF0aW9uIG9mIHBlcnNvbnMgdGhhdCBoYXZlIGEgY29tbW9uIGludGVyZXN0IG5vcm1hbGx5IGNoYXJnZWQgZm9yIGFzIG1lbWJlcnNoaXAgb3IgYXNzb2NpYXRpb24gZmVlcy4gVGhpcyBzZWdtZW50IGFsc28gaW5jbHVkZXMgY2x1YnMsIHVuaW9ucyBhbmQgdHJhZGUgYXNzb2NpYXRpb25zIGFzIHdlbGwgYXMgY2l2aWMgb3JnYW5pemF0aW9ucy4uQ29udHJhY3QgQ29tcGxpYW5jZSAtIEMuQy4gUHJvZ3JhbSBJbmZvcm1hdGlvbipDb250cmFjdCBDb21wbGlhbmNlIC0gSW50ZXJBZ2VuY3kgTWVldGluZ3MdQ09TVEFSUyAtIEFsbCBDT1NUQVJTIE1lbWJlcnMzQ09TVEFSUyAtIENPU1RBUlMgTWVtYmVycyAtIEF1dGhvcml0eSBvciBDb21taXNzaW9uJENPU1RBUlMgLSBDT1NUQVJTIE1lbWJlcnMgLSBCb3JvdWdocyJDT1NUQVJTIC0gQ09TVEFSUyBNZW1iZXJzIC0gQ2l0aWVzMkNPU1RBUlMgLSBDT1NUQVJTIE1lbWJlcnMgLSBDb3VuY2lsIG9mIEdvdmVybm1lbnRzJENPU1RBUlMgLSBDT1NUQVJTIE1lbWJlcnMgLSBDb3VudGllczdDT1NUQVJTIC0gQ09TVEFSUyBNZW1iZXJzIC0gQ291bnR5IC0gQm9hcmQgb2YgRWxlY3Rpb25zMUNPU1RBUlMgLSBDT1NUQVJTIE1lbWJlcnMgLSBFZHVjYXRpb24gLSBIaWdoZXIgRWQuQ09TVEFSUyAtIENPU1RBUlMgTWVtYmVycyAtIEVkdWNhdGlvbiAtIEsgLSAxMj5DT1NUQVJTIC0gQ09TVEFSUyBNZW1iZXJzIC0gRWR1Y2F0aW9uIC0gU2Nob29sIERpc3RyaWN0IC0gSy0xMitDT1NUQVJTIC0gQ09TVEFSUyBNZW1iZXJzIC0gRWR1Y2F0aW9uIE90aGVyM0NPU1RBUlMgLSBDT1NUQVJTIE1lbWJlcnMgLSBGaXJlLCBSZXNjdWUsIEFtYnVsYW5jZS5DT1NUQVJTIC0gQ09TVEFSUyBNZW1iZXJzIC0gSGVhbHRoIEluc3RpdHV0aW9uIUNPU1RBUlMgLSBDT1NUQVJTIE1lbWJlcnMgLSBPdGhlci1DT1NUQVJTIC0gQ09TVEFSUyBNZW1iZXJzIC0gUG9saWNlIERlcGFydG1lbnQgQ09TVEFSUyAtIENPU1RBUlMgTWVtYmVycyAtIFRvd24lQ09TVEFSUyAtIENPU1RBUlMgTWVtYmVycyAtIFRvd25zaGlwc1BQdWJsaWMgV29ya3MgLSBDb25zdHJ1Y3Rpb24gQmlkIE9wcG9ydHVuaXRpZXMgLSBQcm9qZWN0IFNpemUgLSBBLiBVbmRlciAkMTAwLDAwMFZQdWJsaWMgV29ya3MgLSBDb25zdHJ1Y3Rpb24gQmlkIE9wcG9ydHVuaXRpZXMgLSBQcm9qZWN0IFNpemUgLSBCLiAkMTAwLDAwMCB0byAkNTAwLDAwMFhQdWJsaWMgV29ya3MgLSBDb25zdHJ1Y3Rpb24gQmlkIE9wcG9ydHVuaXRpZXMgLSBQcm9qZWN0IFNpemUgLSBDLiAkNTAwLDAwMCB0byAkMSwwMDAsMDAwWlB1YmxpYyBXb3JrcyAtIENvbnN0cnVjdGlvbiBCaWQgT3Bwb3J0dW5pdGllcyAtIFByb2plY3QgU2l6ZSAtIEQuICQxLDAwMCwwMDAgdG8gJDIsMDAwLDAwMFpQdWJsaWMgV29ya3MgLSBDb25zdHJ1Y3Rpb24gQmlkIE9wcG9ydHVuaXRpZXMgLSBQcm9qZWN0IFNpemUgLSBFLiAkMiwwMDAsMDAwIHRvICQ1LDAwMCwwMDBbUHVibGljIFdvcmtzIC0gQ29uc3RydWN0aW9uIEJpZCBPcHBvcnR1bml0aWVzIC0gUHJvamVjdCBTaXplIC0gRi4gJDUsMDAwLDAwMCB0byAkMTAsMDAwLDAwMFJQdWJsaWMgV29ya3MgLSBDb25zdHJ1Y3Rpb24gQmlkIE9wcG9ydHVuaXRpZXMgLSBQcm9qZWN0IFNpemUgLSBHLiBPdmVyICQxMCwwMDAsMDAwU1B1YmxpYyBXb3JrcyAtIENvbnN0cnVjdGlvbiBCaWQgT3Bwb3J0dW5pdGllcyAtIFdvcmsgVHlwZSAtIDEuIEdlbmVyYWwgQ29uc3RydWN0aW9uTlB1YmxpYyBXb3JrcyAtIENvbnN0cnVjdGlvbiBCaWQgT3Bwb3J0dW5pdGllcyAtIFdvcmsgVHlwZSAtIDIuIEhWQUMvTWVjaGFuaWNhbEdQdWJsaWMgV29ya3MgLSBDb25zdHJ1Y3Rpb24gQmlkIE9wcG9ydHVuaXRpZXMgLSBXb3JrIFR5cGUgLSAzLiBQbHVtYmluZ0lQdWJsaWMgV29ya3MgLSBDb25zdHJ1Y3Rpb24gQmlkIE9wcG9ydHVuaXRpZXMgLSBXb3JrIFR5cGUgLSA0LiBFbGVjdHJpY2FsTlB1YmxpYyBXb3JrcyAtIENvbnN0cnVjdGlvbiBCaWQgT3Bwb3J0dW5pdGllcyAtIFdvcmsgVHlwZSAtIDUuIEZpcmUgUHJvdGVjdGlvbkxQdWJsaWMgV29ya3MgLSBDb25zdHJ1Y3Rpb24gQmlkIE9wcG9ydHVuaXRpZXMgLSBXb3JrIFR5cGUgLSA2LiBNaXNjZWxsYW5lb3VzHVJhdyBNYXRlcmlhbHMgLSBSYXcgTWF0ZXJpYWxzFVsENS0xNQczLTM2LTQwBzMtMzYtNDEHMy0zNi00MgczLTM2LTQzBzMtMzYtNDQHMy0zNi00NQczLTM2LTQ2BzMtMzYtNDcHMy0zNi00OAczLTM2LTQ5BzMtMzYtNTAHMy0zNi01MQczLTM2LTUyBzMtMzYtNTMHMy0zNi01NAczLTM2LTU1BzMtMzYtNTYHMy0zNi01NwczLTM2LTU4BzMtMzYtNTkHMy0zNi02MAczLTM2LTYxBzMtMzYtNjIHMy0zNi02MwczLTM2LTY0BzMtMzYtNjUHMy0zNi02NgczLTM2LTY3BzMtMzYtNjgHMy0zNi02OQczLTM2LTcwBzMtMzYtNzEHMy0zNi03MgczLTM2LTczBzMtMzYtNzQHMy0zNi03NQczLTM3LTc2BzMtMzctNzcHMy0zNy03OAczLTM3LTc5BzMtMzctODAHMy0zNy04MQczLTM3LTgyBzMtMzctODMHMy0zNy05NwczLTM3LTk2BzMtMzctODQHMy0zNy04NQczLTM3LTg2BzMtMzctODcHMy0zNy04OAczLTM3LTg5BzMtMzctOTAHMy0zNy05MQczLTM3LTkyBzMtMzctOTMHMy0zNy05NAQ4LTI2BDgtMjMDNC0zAzQtNAM0LTUDNC02AzQtNwM0LTgENC0yOQM0LTkENC0xMAQ0LTMwBDQtMTEENC0xMgQ0LTEzBDQtMTQENC0zMQQ0LTMyBDQtMzMHNi0xOC0xNAc2LTE4LTE1BzYtMTgtMTYHNi0xOC0xNwc2LTE4LTE5BzYtMTgtMjAHNi0xOC0yMQc2LTE3LTIyBzYtMTctMjYHNi0xNy0yNAc2LTE3LTI1BzYtMTctMjcHNi0xNy0yOAUxMC0zOBQrA1tnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnFgBkAgMPEGRkFgBkAqUBDw8WAh8EZWRkAqsBDw8WAh8KaGRkAq8BD2QWAmYPZBYGAgEPDxYCHwQFUDxmb250IGNvbG9yPSd3aGl0ZSc+PHN0cm9uZz5ObyBUYWJ1bGF0aW9ucyBleGlzdCBmb3IgNjEwMDA2NjAwNy48L3N0cm9uZz48L2ZvbnQ+ZGQCAw8PFgIfBAVLPGZvbnQgY29sb3I9J3doaXRlJz48c3Ryb25nPk5vIEF3YXJkcyBleGlzdCBmb3IgNjEwMDA2NjAwNy48L3N0cm9uZz48L2ZvbnQ+ZGQCBQ8PFgIfBAVOPGZvbnQgY29sb3I9J3doaXRlJz48c3Ryb25nPk5vIENvbnRyYWN0cyBleGlzdCBmb3IgNjEwMDA2NjAwNy48L3N0cm9uZz48L2ZvbnQ+ZGRkUL3itnHV6NFxszBS2RW87CEkDo11o7F5YzxAO0FvdXE=" />
 </div>
+
+<script type="text/javascript">
+//<![CDATA[
+var theForm = document.forms['aspnetForm'];
+if (!theForm) {
+    theForm = document.aspnetForm;
+}
+function __doPostBack(eventTarget, eventArgument) {
+    if (!theForm.onsubmit || (theForm.onsubmit() != false)) {
+        theForm.__EVENTTARGET.value = eventTarget;
+        theForm.__EVENTARGUMENT.value = eventArgument;
+        theForm.submit();
+    }
+}
+//]]>
+</script>
+
+
+<script src="/WebResource.axd?d=EbPes0TBYwWRwO-c7VyaF1T_lia1jz2n_Zk3y821_jdI-sW3WQfrSFIJO5K2rg2tvJsfrVlb5bQt_fxheh0Kdbdlw8JtgD93po-ojKe-kes1&amp;t=638901392248157332" type="text/javascript"></script>
+
+<div class="aspNetHidden">
+
+	<input type="hidden" name="__VIEWSTATEGENERATOR" id="__VIEWSTATEGENERATOR" value="CCA0EEA6" />
+	<input type="hidden" name="__SCROLLPOSITIONX" id="__SCROLLPOSITIONX" value="0" />
+	<input type="hidden" name="__SCROLLPOSITIONY" id="__SCROLLPOSITIONY" value="0" />
+	<input type="hidden" name="__EVENTVALIDATION" id="__EVENTVALIDATION" value="/wEdAA4zd7gIFgRdqsr5k2DuM+fGr7Enz/x4ElPOoCdmOLo/nR/iEZnllmealV8ytevxS+gYrXLApf2pfnjOY8pfrM2Gk09c9P9vYop+5l1QsZxIPSWHCbwMdjKKtttyn5lXo4rF1/6B3NDNIidE3L6hSxeIZ0AcXWMYLYTnHfYou3FBIMpLGbHrwzmcN6WKxtjbzrjVR3oI7xuoS56eFFk6wInJXlLS8dI+CrFyZy7BTiggBbXCg4yy6HdGMVOHDyWpLPl03CSP8QZk4dCuhtrPUJn5vFjnr1nbv0fFk3XKWGuYgB8K9X1eiNZ6qZuB8oSNlQRwV36vqJhqy5jRUJ36cAje" />
+</div>
+        <table width="1000" align="Center">
+            <tr height="630">
+                <td background="Images/LeftCork.jpg" width="20">&nbsp;</td>
+                <td width="14">&nbsp;</td>
+                <td valign="top">
+                    <table border="0" cellpadding="0" cellspacing="0" align="left" width="918">
+                        <tr height="12">
+                            <td colspan="3"></td>
+                        </tr>
+                        <tr>
+                            <td colspan="3">
+                                <table border="0" cellpadding="0" cellspacing="0" align="left">
+                                    <tr height="51">
+                                        <td bgcolor="#A3BE39" width="11">&nbsp;</td>
+                                        <td bgcolor="#2297C3" width="220">
+                                            <span id="ctl00_lblImage"><a title='PA eMarketplace' href='http://www.emarketplace.state.pa.us/'><img src='images/paemarket.jpg' alt='PA eMarketplace' height='47' width='212' border='0' /></a></span>
+                                        </td>
+                                        <td bgcolor="#F3F3F5" width="5">&nbsp;</td>
+                                        <td bgcolor="#404080" width="255">
+                                            <a title="Supplier Service Center" onmouseover=" changeImages('supplierserv', 'images/supplierSC2.bmp');return true; " onmouseout=" changeImages('supplierserv', 'images/supplierSC1.bmp');return true; " href="https://www.dgs.pa.gov/Materials-Services-Procurement/Supplier-Service-Center/Pages/default.aspx">
+                                                <img id="Img2" src="images/supplierSC1.bmp" alt="Supplier Service Center" name="supplierserv" height="18" width="176" border="0" />
+                                            </a>&nbsp;&nbsp;
+                                        </td>
+                                        <td bgcolor="#404080" width="255">
+                                            <a title="Bureau of Procurement" onmouseover=" changeImages('bop1', 'images/bop2.bmp');return true; " onmouseout=" changeImages('bop1', 'images/bop1.bmp');return true; " href="https://www.dgs.pa.gov/Materials-Services-Procurement/Pages/default.aspx">
+                                                <img id="Img5" src="images/bop1.bmp" alt="Bureau of Procurement" name="bop1" height="18" width="147" border="0" />
+                                            </a>
+                                        </td>
+                                        <td bgcolor="#404080" width="510">&nbsp;</td>
+                                    </tr>
+                                </table>
+                            </td>
+                        </tr>
+                        <tr style="height: 5px">
+                            <td colspan="3">
+                                
+<script language="javascript" type="text/javascript">
+<!--
+    function adminlogin_onclick() {
+        var sPath = window.location.pathname;
+        var sPage = sPath.substring(sPath.lastIndexOf("/") + 1);
+        window.location = "Login.aspx?From=" + sPage;
+    }
+// -->
+</script>
+    <style id="antiClickjack">
+        body {
+            display: none !important;
+        }
+    </style>
+    <script type="text/javascript">
+        if (self === top) {
+            var antiClickjack = document.getElementById("antiClickjack");
+            antiClickjack.parentNode.removeChild(antiClickjack);
+        } else {
+            top.location = self.location;
+        }
+    </script>
+<table width="100%">
+    <tr>
+        <td>
+            <table border="0" cellpadding="0" cellspacing="0" width="100%">
+                <tr>
+                    <td align="left">
+                        <div id="ctl00_AdminLogin1_pnlLoggedOut" style="height:20px;width:220px;">
+	
+                            <table>
+                                <tr>
+
+                                    	<td style="height:20;vertical-align:middle">
+		                                <a onmouseover="mouseOver(smalllogin.png, 'images/smalllogin.png', 'Img9');" onmouseout="mouseOut('images/smalllogin.png', 'Img9');">
+			                                <img id="Img9" src="images/smalllogin.png"  alt="Administration Login" border="0"  onclick=" return adminlogin_onclick() "/></a><br />
+	                                </td>
+                                </tr>
+                            </table>
+                        
+</div>
+                        
+                        
+                        <span id="ctl00_AdminLogin1_lblUserID"></span>
+                        <span id="ctl00_AdminLogin1_lblLoginWarning"></span>
+                    </td>
+                    <td align="right">
+                        <a onmouseover=" changeImages('email1', 'images/email2.jpg');return true; " onmouseout=" changeImages('email1', 'images/email1.jpg');return true; " href="mailto:gs-procure@state.pa.us">
+                            <img id="email1" src="images/email1.jpg" alt="Email" name="email1" height="17" width="76" border="0"/>
+                        </a>
+                    </td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+</table>
+                            </td>
+                        </tr>
+                        <tr height="37" bgcolor="#A3BE39">
+                            <td width="30%" align="left">
+                                <span id="ctl00_lblTitle" style="color:White;font-size:Large;font-weight:bold;">Solicitations</span>
+                            </td>
+                            <td width="35%" align="center">
+                                
+                                
+                            </td>
+                            <td width="35%" align="center">
+                                
+                                
+                            </td>
+                        </tr>
+                        <tr>
+                            <td colspan="3">
+                                
+    <table border="0" cellpadding="0" cellspacing="0" width="100%">
+    <tr height="27">
+        <td align="left">
+            <div onmouseover=" changeImages('back1', 'images/back2.jpg');return true; " onmouseout=" changeImages('back1', 'images/back1.jpg');return true; ">
+                <a id="ctl00_MainBody_lnkBack" title="Back" href="Search.aspx" style="display:inline-block;width:51px;">
+                    <img id="back1" src="images/back1.jpg" name="Back" height="17" width="51" border="0" alt="Back"/>
+                </a>
+            </div>
+        </td>
+    </tr>
+</table>
+<br/>
+<table align="center" border="0" summary="Advertisement Information" width="100%">
+<tr>
+<td>
+<table>
+
+<tr>
+    <td align="center">
+        <font color="#4A4A7B">
+            ADVERTISEMENT INFORMATION<br/>
+            <br/>
+        </font>
+    </td>
+</tr>
+<tr>
+    <td>
+        <!--
+        **********************************************************************
+        General Information
+        **********************************************************************
+        -->
+        
+        <div style="color: red; font-size: 14px;">
+            
+        </div>
+        <table cellspacing="0" width="100%" summary="Please enter general information">
+            <thead>
+            <tr class="SmallTitle">
+                <th colspan="4">
+                    General Information
+                </th>
+
+            </tr>
+            </thead>
+            <tbody>
+            <tr>
+                <td align="center" colspan="4">
+                    
+                </td>
+            </tr>
+            <tr>
+                <td align="left">
+                    <strong>
+                        Department for this solicitation:
+                    </strong>
+                </td>
+                <td align="left">
+                    <span id="ctl00_MainBody_lblSolicitationDept">Procurement</span>
+                </td>
+            </tr>
+            <tr>
+                <td align="left">
+                    <strong>
+                        Date Prepared:
+                        
+                    </strong>
+                </td>
+                <td align="left">
+                    
+                    <span id="ctl00_MainBody_lblDatePre">05/05/26</span>
+                </td>
+                <td align="left">
+                    <strong>
+                        Types:
+                    </strong>
+                </td>
+                <td align="left">
+                    
+                    <span id="ctl00_MainBody_lblTypes">IFB</span>
+                </td>
+            </tr>
+            <tr>
+                <td align="left">
+                    <strong>
+                        Advertisement Type:
+                    </strong>
+                </td>
+                <td colspan="3" align="left">
+                    <table id="ctl00_MainBody_rdolAdTypes">
+	<tr>
+		<td><input id="ctl00_MainBody_rdolAdTypes_0" type="radio" name="ctl00$MainBody$rdolAdTypes" value="1" checked="checked" /><label for="ctl00_MainBody_rdolAdTypes_0">Service</label></td><td><input id="ctl00_MainBody_rdolAdTypes_1" type="radio" name="ctl00$MainBody$rdolAdTypes" value="10" onclick="javascript:setTimeout(&#39;__doPostBack(\&#39;ctl00$MainBody$rdolAdTypes$1\&#39;,\&#39;\&#39;)&#39;, 0)" /><label for="ctl00_MainBody_rdolAdTypes_1">Materials</label></td><td><input id="ctl00_MainBody_rdolAdTypes_2" type="radio" name="ctl00$MainBody$rdolAdTypes" value="9" onclick="javascript:setTimeout(&#39;__doPostBack(\&#39;ctl00$MainBody$rdolAdTypes$2\&#39;,\&#39;\&#39;)&#39;, 0)" /><label for="ctl00_MainBody_rdolAdTypes_2">Service & Materials</label></td><td><input id="ctl00_MainBody_rdolAdTypes_3" type="radio" name="ctl00$MainBody$rdolAdTypes" value="12" onclick="javascript:setTimeout(&#39;__doPostBack(\&#39;ctl00$MainBody$rdolAdTypes$3\&#39;,\&#39;\&#39;)&#39;, 0)" /><label for="ctl00_MainBody_rdolAdTypes_3">PW Construction</label></td><td><input id="ctl00_MainBody_rdolAdTypes_4" type="radio" name="ctl00$MainBody$rdolAdTypes" value="3" onclick="javascript:setTimeout(&#39;__doPostBack(\&#39;ctl00$MainBody$rdolAdTypes$4\&#39;,\&#39;\&#39;)&#39;, 0)" /><label for="ctl00_MainBody_rdolAdTypes_4">Agency Construction</label></td><td><input id="ctl00_MainBody_rdolAdTypes_5" type="radio" name="ctl00$MainBody$rdolAdTypes" value="4" onclick="javascript:setTimeout(&#39;__doPostBack(\&#39;ctl00$MainBody$rdolAdTypes$5\&#39;,\&#39;\&#39;)&#39;, 0)" /><label for="ctl00_MainBody_rdolAdTypes_5">Real Estate</label></td>
+	</tr>
+</table>
+                    
+                </td>
+            </tr>
+            
+            <tr>
+                <td align="left">
+                    <strong>
+                        Solicitation/Project#:
+                    </strong>
+                </td>
+                <td align="left">
+                    
+                    <span id="ctl00_MainBody_lblBidNo">6100066007</span>
+                </td>
+                <td align="left">
+                    <strong>
+                        Solicitation/Project Title:
+                    </strong>
+                </td>
+                <td align="left">
+                    
+                    <span id="ctl00_MainBody_lblBidTitle">SLUDGE REMOVAL</span>
+                </td>
+            </tr>
+            <tr>
+                <td valign="top" align="left">
+                    <strong>
+                        Description:
+                    </strong>
+                </td>
+                <td colspan="3" align="left">
+                    
+                    <span id="ctl00_MainBody_lblDesc">Sludge Removal Services are being solicitated for Clarks Summit State Hospital (“CSSH”) located at 1451 Hillside Drive, Clarks Summit, PA&nbsp; 18411.</span>
+                </td>
+            </tr>
+            
+            <tr id="ctl00_MainBody_trCOSTAR">
+	<td colspan="4" align="left" style="font-weight:bold;">
+                    <span id="ctl00_MainBody_lblCostarsMessage"></span>
+                </td>
+</tr>
+
+            </tbody>
+        </table>
+    </td>
+</tr>
+<tr>
+    <td>
+        <!--
+        **********************************************************************
+        Department Information
+        **********************************************************************
+        -->
+        <table width="100%" summary="Please enter Department Information">
+            <thead>
+            <tr class="SmallTitle">
+                <th colspan="4">
+                    Department Information
+                </th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr>
+                <td align="left">
+                    <strong>
+                        Department/Agency:
+                    </strong>
+                </td>
+                <td align="left" width="315">
+                    
+                    <span id="ctl00_MainBody_lblAgency">Department of Human Services "prior DPW"</span>
+                </td>
+                <td align="left">
+                    <strong>
+                        Delivery Location:
+                        
+                    </strong>
+                </td>
+                <td align="left">
+                    
+                    <span id="ctl00_MainBody_lblLocation"> <font size='2'>1451 Hillside Drive&nbsp; Clarks Summit&nbsp; Pa 18411</font></span>
+                </td>
+            </tr>
+            <tr>
+                <td valign="top" align="left">
+                    <strong>
+                        County:
+                        
+                    </strong>
+                </td>
+                <td valign="top" align="left">
+                    
+                    <span id="ctl00_MainBody_lblCounty">Lackawanna</span>
+                </td>
+                <td valign="top" align="left">
+                    <strong>
+                        Duration:
+                        
+                    </strong>
+                </td>
+                <td valign="top" align="left">
+                    
+                    <span id="ctl00_MainBody_lblDuration">Sept 2026 - Aug 2027</span>
+                </td>
+            </tr>
+            <tr id="ctl00_MainBody_trAcqType">
+	<td align="left">
+                    
+                </td>
+	<td align="left">
+                    
+                    
+                </td>
+</tr>
+
+            </tbody>
+        </table>
+    </td>
+</tr>
+<tr>
+    <td>
+        <!--
+        **********************************************************************
+        Contact Information
+        **********************************************************************
+        -->
+        <table width="100%" summary="Please enter contact information">
+            <thead>
+            <tr class="SmallTitle">
+                <th colspan="4">
+                    Contact Information
+                </th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr>
+                <td align="left">
+                    <strong>
+                        First Name:
+                    </strong>
+                </td>
+                <td align="left">
+                    
+                    <span id="ctl00_MainBody_lblFName">Margaret</span>
+                </td>
+                <td align="left">
+                    <strong>
+                        Last Name:
+                    </strong>
+                </td>
+                <td align="left">
+                    
+                    <span id="ctl00_MainBody_lblLName">King</span>
+                </td>
+            </tr>
+            <tr>
+                <td align="left">
+                    <strong>
+                        Phone Number:<br/>
+                        (XXX-XXX-XXXX)
+                    </strong>
+                </td>
+                <td align="left">
+                    
+                    
+                    <span id="ctl00_MainBody_lblPhone">570-587-7406</span>
+                    
+                    
+                    <span id="ctl00_MainBody_lblExt"></span>
+                </td>
+                <td align="left">
+                    <strong>
+                        Email:
+                    </strong>
+                </td>
+                <td align="left">
+                    
+                    <span id="ctl00_MainBody_lblEmail">margarekin@pa.gov</span>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </td>
+</tr>
+<tr>
+    <td>
+        <!--
+        **********************************************************************
+        Bid Information
+        **********************************************************************
+        -->
+        <table width="100%" summary="Please enter bid information">
+            <thead>
+            <tr class="SmallTitle">
+                <th colspan="4">
+                    Solicitation Information
+                </th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr>
+                <td colspan="4">
+                    <font size="2">
+                       Bids must be received by the purchasing agency on the Solicitation Due Date no later than the Solicitation Due Time as set forth in the solicitation. Any conflict between the dates and/or times contained in the solicitation itself or its attachments and this advertisement shall be resolved in favor of the solicitation. <br/>
+                        <br/>
+                    </font>
+                </td>
+            </tr>
+            <tr>
+                <td align="left" width="172">
+                    <strong>
+                        Solicitation Start Date:
+                        
+                    </strong>
+                </td>
+                <td align="left">
+                    
+                    <span id="ctl00_MainBody_lblStartDate">05/29/26</span>
+                </td>
+                <td colspan="2"></td>
+            </tr>
+            <tr>
+                <td align="left" width="20%">
+                    <strong>
+                        Solicitation Due Date:
+                        
+                    </strong>
+                </td>
+                <td align="left" width="30%">
+                    
+                    <span id="ctl00_MainBody_lblEndDate">06/12/26</span>
+                </td>
+                <td align="left" width="20%">
+                    <strong>
+                        Solicitation Due Time:
+                        
+                    </strong>
+                </td>
+                <td align="left" width="30%">
+                    
+                    <span id="ctl00_MainBody_lblDueTime">9:00 AM</span>
+                </td>
+            </tr>
+            <tr>
+                <td align="left">
+                    <strong>
+                        Solicitation Opening Date:
+                        
+                    </strong>
+                </td>
+                <td align="left">
+                    
+                    <span id="ctl00_MainBody_lblOpenDate">06/12/26</span>
+                </td>
+                <td align="left">
+                    <strong>
+                        Solicitation Opening Time:
+                        
+                    </strong>
+                </td>
+                <td align="left">
+                    
+                    <span id="ctl00_MainBody_lblOpenTime">9:01 AM</span>
+                </td>
+            </tr>
+            <tr>
+                <td align="left">
+                    <strong>
+                        Opening Location:
+                        
+                    </strong>
+                </td>
+                <td colspan="3" align="left">
+                    
+                    <span id="ctl00_MainBody_lblLoc"> <font size='2'></font></span>
+                </td>
+            </tr>
+            <tr>
+                <td align="left">
+                    <strong>
+                        No. of Addendums:
+                        
+                    </strong>
+                </td>
+                <td colspan="3" align="left">
+                    
+                    <span id="ctl00_MainBody_lblAdd">0</span>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="4">
+                    
+                </td>
+            </tr>
+            <tr>
+                <td align="left">
+                    <strong>
+                        Amended Date:
+                    </strong>
+                </td>
+                <td colspan="3" align="left">
+                    <span id="ctl00_MainBody_lblAmendedDt">05/21/26</span>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+        
+        
+     <span id="ctl00_MainBody_lbllnkSRM2" style="font-weight:bold;"></span>
+    </td>
+</tr>
+<tr>
+    <td>
+        <!--
+        **********************************************************************
+        Upload Information
+        **********************************************************************
+        -->
+        <table cellspacing="0" border="0" width="100%">
+            <thead>
+            <tr class="SmallTitle">
+                <th>
+                    <span id="ctl00_MainBody_lblUploadTitle">Related Solicitation Files</span>
+                </th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr>
+                <td align="left">
+                    <table width="100%">
+                        <tr>
+                            <td>
+                                
+                            </td>
+                            <td>
+                                
+                            </td>
+                        </tr>
+                    </table>
+                    
+                </td>
+            </tr>
+            <tr>
+                <td align="left">
+                    <br/>
+                    
+                    <br/>
+                    <table id="ctl00_MainBody_tblOrigFiles" style="border-style:None;width:100%;">
+	<tr>
+		<th>
+                                <font size="3">
+                                    <u>Original Files</u>
+                                </font><br/>
+                                
+                            </th>
+	</tr><tr>
+		<td><table cellspacing="0" rules="all" border="1" id="ctl00_MainBody_dgFileList" style="border-style:None;border-collapse:collapse;">
+			<tr>
+				<td style="border-style:None;">
+                                                
+                                            </td><td style="border-style:None;"><a href="FileDownload.aspx?file=6100066007/Solicitation_0.pdf&amp;OriginalFileName=Statement of Work - Sludge Removal Service 5.20.26.pdf" target="_blank">Statement of Work - Sludge Removal Service 5.20.26.pdf</a></td>
+			</tr><tr>
+				<td style="border-style:None;">
+                                                
+                                            </td><td style="border-style:None;"><a href="FileDownload.aspx?file=6100066007/Solicitation_1.pdf&amp;OriginalFileName=Terms and Conditions.pdf" target="_blank">Terms and Conditions.pdf</a></td>
+			</tr><tr>
+				<td style="border-style:None;">
+                                                
+                                            </td><td style="border-style:None;"><a href="FileDownload.aspx?file=6100066007/Solicitation_2.pdf&amp;OriginalFileName=General Conditions and Instructions to Bidders.pdf" target="_blank">General Conditions and Instructions to Bidders.pdf</a></td>
+			</tr>
+		</table></td>
+	</tr><tr>
+		<td></td>
+	</tr>
+</table>
+                    <br/>
+                    <br/>
+                    
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </td>
+</tr>
+<tr>
+    <td>
+        
+        
+        <table width="100%">
+            <tr>
+                <td>
+                    <span id="ctl00_MainBody_lblErrMsg" style="color:Red;font-size:Large;font-weight:bold;"></span>
+                </td>
+            </tr>
+            <tr>
+                <td align="right">
+                    <!--
+                    **********************************************************************
+                    Button Information
+                    **********************************************************************
+                    -->
+                    <table border="0" cellpadding="3" cellspacing="0">
+
+
+                        <tr>
+                            <td>
+                                <input type="submit" name="ctl00$MainBody$btnPrint" value="Print Advertisement" id="ctl00_MainBody_btnPrint" />
+                            </td>
+                            <td>
+                                <input type="submit" name="ctl00$MainBody$btnReturnToSearch" value="Cancel and Return To Search" id="ctl00_MainBody_btnReturnToSearch" style="width:256px;" />
+                            </td>
+                        </tr>
+                        <tr>
+                            <td></td>
+                            <td>
+                                
+                            </td>
+                        </tr>
+                        <tr>
+                            <td></td>
+                            <td>
+                                
+                            </td>
+                        </tr>
+                    </table>
+                    <br/>
+                    <br/>
+
+                </td>
+            </tr>
+        </table>
+    </td>
+</tr>
+<tr id="ctl00_MainBody_trOthers" class="SmallTitle">
+	<td>
+        <table style="width: 656px" border="0" cellpadding="3">
+            <tr>
+                <td style="width: 195px" align="Right">
+                    <strong>
+                        Go to Solicitation Tabulations
+                    </strong>
+                </td>
+                <td align="Left">
+                    <span id="ctl00_MainBody_lblTabLink" style="font-weight:bold;"><font color='white'><strong>No Tabulations exist for 6100066007.</strong></font></span>
+                </td>
+            </tr>
+            <tr>
+                <td align="Right">
+                    <strong>
+                        Go to Awards
+                    </strong>
+                </td>
+                <td align="Left">
+                    <span id="ctl00_MainBody_lblBidLink" style="font-weight:bold;"><font color='white'><strong>No Awards exist for 6100066007.</strong></font></span>
+                </td>
+            </tr>
+            <tr>
+                <td align="Right">
+                    <strong>
+                        Go to Contracts
+                    </strong>
+                </td>
+                <td align="Left">
+                    <span id="ctl00_MainBody_lblContLink" style="font-weight:bold;"><font color='white'><strong>No Contracts exist for 6100066007.</strong></font></span>
+                </td>
+            </tr>
+        </table>
+    </td>
+</tr>
+
+</table>
+<input type="hidden" name="ctl00$MainBody$hdnDraftId" id="ctl00_MainBody_hdnDraftId" />
+<input type="hidden" name="ctl00$MainBody$hdnbEndDt" id="ctl00_MainBody_hdnbEndDt" value="06/12/26" />
+<input type="hidden" name="ctl00$MainBody$hdnMode" id="ctl00_MainBody_hdnMode" value="3" />
+</td>
+</tr>
+</table>
+<input type="hidden" name="ctl00$MainBody$hdnFromPage" id="ctl00_MainBody_hdnFromPage" value="3" />
+
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+                <td bgcolor="#F3F3F5" width="18">&nbsp;</td>
+                <td background="Images/RightCork.jpg" width="20">&nbsp;</td>
+            </tr>
+        </table>
+    
+
+<script type="text/javascript">
+//<![CDATA[
+
+theForm.oldSubmit = theForm.submit;
+theForm.submit = WebForm_SaveScrollPositionSubmit;
+
+theForm.oldOnSubmit = theForm.onsubmit;
+theForm.onsubmit = WebForm_SaveScrollPositionOnSubmit;
+//]]>
+</script>
+</form>
+
+
 </body>
 </html>
