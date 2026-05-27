@@ -115,6 +115,45 @@ def extract_fields(html):
     }
 
 
+def probe():
+    input_csv = find_input_csv(".")
+    df = pd.read_csv(input_csv, dtype=str)
+    done_ids = load_done_ids(OUTPUT_PATH)
+
+    new_rows = df[~df["Bid No"].astype(str).isin(done_ids)]
+    if new_rows.empty:
+        print("No new solicitations to probe.")
+        return
+
+    row = new_rows.iloc[0]
+    bid_no = str(row["Bid No"])
+    url = build_url(bid_no)
+    print(f"Probing: {url}\n")
+
+    session = make_session()
+    html = fetch_page(session, url)
+    fields = extract_fields(html)
+
+    print("=== General Information ===")
+    print(f"Department:        {fields['department_for_solicitation']}")
+    print(f"Date Prepared:     {fields['date_prepared']}")
+    print(f"Advertisement Type:{fields['advertisement_type']}")
+    print(f"\n=== Description (full) ===")
+    print(fields["description_full"][:500] + ("..." if len(fields["description_full"]) > 500 else ""))
+    print(f"\n=== Department Information ===")
+    print(f"Delivery Location: {fields['delivery_location']}")
+    print(f"Duration:          {fields['duration']}")
+    print(f"\n=== Contact Information ===")
+    print(f"Name:  {fields['contact_first_name']} {fields['contact_last_name']}")
+    print(f"Phone: {fields['contact_phone']}")
+    print(f"Email: {fields['contact_email']}")
+    print(f"\n=== Solicitation Information ===")
+    print(f"Due Time:          {fields['solicitation_due_time']}")
+    print(f"Opening Time:      {fields['solicitation_opening_time']}")
+    print(f"Opening Location:  {fields['opening_location']}")
+    print(f"No. of Addendums:  {fields['no_of_addendums']}")
+
+
 if __name__ == "__main__":
     cmd = sys.argv[1] if len(sys.argv) > 1 else "probe"
     if cmd == "probe":
