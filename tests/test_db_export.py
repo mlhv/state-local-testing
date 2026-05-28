@@ -173,3 +173,61 @@ def test_connect_db_returns_connection(monkeypatch):
         with patch("db_export.pymysql.connect", return_value=mock_conn):
             result = connect_db()
     assert result is mock_conn
+
+
+from db_export import upsert_rows
+
+
+def test_upsert_rows_returns_row_count():
+    df = pd.DataFrame({"Bid No": ["1", "2"], "Title": ["A", "B"]})
+    mock_conn = MagicMock()
+    mock_cursor = MagicMock()
+    mock_conn.cursor.return_value.__enter__ = MagicMock(return_value=mock_cursor)
+    mock_conn.cursor.return_value.__exit__ = MagicMock(return_value=False)
+
+    count = upsert_rows(mock_conn, "pa_solicitations", df, "bid_no")
+    assert count == 2
+
+
+def test_upsert_rows_calls_executemany():
+    df = pd.DataFrame({"Bid No": ["1", "2"], "Title": ["A", "B"]})
+    mock_conn = MagicMock()
+    mock_cursor = MagicMock()
+    mock_conn.cursor.return_value.__enter__ = MagicMock(return_value=mock_cursor)
+    mock_conn.cursor.return_value.__exit__ = MagicMock(return_value=False)
+
+    upsert_rows(mock_conn, "pa_solicitations", df, "bid_no")
+    assert mock_cursor.executemany.called
+    sql_arg = mock_cursor.executemany.call_args[0][0]
+    assert "INSERT INTO `pa_solicitations`" in sql_arg
+    assert "ON DUPLICATE KEY UPDATE" in sql_arg
+
+
+def test_upsert_rows_batches_large_datasets():
+    # 1200 rows → 3 batches of 500/500/200
+    df = pd.DataFrame({
+        "Bid No": [str(i) for i in range(1200)],
+        "Title":  ["test"] * 1200,
+    })
+    mock_conn = MagicMock()
+    mock_cursor = MagicMock()
+    mock_conn.cursor.return_value.__enter__ = MagicMock(return_value=mock_cursor)
+    mock_conn.cursor.return_value.__exit__ = MagicMock(return_value=False)
+
+    count = upsert_rows(mock_conn, "pa_solicitations", df, "bid_no")
+    assert count == 1200
+    assert mock_cursor.executemany.call_count == 3
+
+
+def test_upsert_rows_pk_excluded_from_update():
+    df = pd.DataFrame({"Bid No": ["1"], "Title": ["A"]})
+    mock_conn = MagicMock()
+    mock_cursor = MagicMock()
+    mock_conn.cursor.return_value.__enter__ = MagicMock(return_value=mock_cursor)
+    mock_conn.cursor.return_value.__exit__ = MagicMock(return_value=False)
+
+    upsert_rows(mock_conn, "pa_solicitations", df, "bid_no")
+    sql_arg = mock_cursor.executemany.call_args[0][0]
+    # PK should NOT appear in the UPDATE clause
+    update_part = sql_arg.split("ON DUPLICATE KEY UPDATE")[1]
+    assert "`bid_no`" not in update_part

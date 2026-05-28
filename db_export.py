@@ -91,3 +91,34 @@ def connect_db():
         )
     except pymysql.Error as e:
         sys.exit(f"ERROR: Could not connect to MySQL: {e}")
+
+
+def upsert_rows(conn, table: str, df: pd.DataFrame, pk_norm: str) -> int:
+    norm_cols    = [normalize_col(c) for c in df.columns]
+    col_list     = ", ".join(f"`{c}`" for c in norm_cols)
+    placeholders = ", ".join(["%s"] * len(norm_cols))
+    update_clause = ", ".join(
+        f"`{c}`=VALUES(`{c}`)" for c in norm_cols if c != pk_norm
+    )
+    sql = (
+        f"INSERT INTO `{table}` ({col_list}) VALUES ({placeholders}) "
+        f"ON DUPLICATE KEY UPDATE {update_clause}"
+    )
+
+    records  = df.values.tolist()
+    total    = len(records)
+    upserted = 0
+
+    with conn.cursor() as cur:
+        for i in range(0, total, BATCH_SIZE):
+            batch   = records[i : i + BATCH_SIZE]
+            cleaned = [
+                [None if (isinstance(v, float) and pd.isna(v)) else v for v in row]
+                for row in batch
+            ]
+            cur.executemany(sql, cleaned)
+            conn.commit()
+            upserted += len(batch)
+            print(f"[{upserted}/{total}] upserted...")
+
+    return upserted
