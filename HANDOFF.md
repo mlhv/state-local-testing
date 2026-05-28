@@ -14,6 +14,7 @@ Aggregate state government procurement opportunities into a common dataset feedi
 |---|---|---|---|---|---|
 | California | ✅ Complete | `cali/` | calEProcure | Manual XLS export | `events_enriched.csv` (24 cols) |
 | Pennsylvania | ✅ Complete | `pa/` | PA eMarketplace | Manual CSV export | `solicitations_enriched.csv` (28 cols) |
+| Massachusetts | ✅ Complete | `ma/` | COMMBUYS | Manual CSV export | `solicitations_enriched.csv` (31 cols) |
 
 ---
 
@@ -54,6 +55,27 @@ python scraper.py run
 ```
 
 **Key files:** `pa/README.md` (run instructions), `pa/POSTDEV.md`, `pa/tests/` (11 tests)
+
+**Known gaps:** S3 upload, DB normalization, automated CSV export
+
+---
+
+## Massachusetts (COMMBUYS)
+
+**Portal:** https://www.commbuys.com/bso/view/search/external/advancedSearchBid.xhtml?openBids=true
+
+**How it works:** Server-rendered HTML (Periscope S2G / JSF). Bid detail pages are fully rendered in the HTML response — no JS execution needed. The scraper GETs each detail page and parses it with BeautifulSoup. Header fields use label-text matching. Ship-to contact info, SBPP eligibility, and multi-item UNSPSC data use dedicated helpers. Items are pipe-delimited when a solicitation has multiple line items.
+
+**Run:**
+```bash
+cd ma
+source ../venv/bin/activate
+# Export CSV from COMMBUYS (Bid Solicitations, open bids, Export to CSV)
+python scraper.py probe
+python scraper.py run
+```
+
+**Key files:** `ma/tests/` (11 tests)
 
 **Known gaps:** S3 upload, DB normalization, automated CSV export
 

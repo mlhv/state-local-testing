@@ -9,3 +9,5 @@ __pycache__
 .claude
 cali/HANDOFF.md
 probe_response.json
+ma/bidSearchResults.csv
+ma/solicitations_enriched.csv
