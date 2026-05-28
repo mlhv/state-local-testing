@@ -48,6 +48,38 @@ SCRAPED_FIELDS = [
 EMPTY_SCRAPED = {k: "" for k in SCRAPED_FIELDS}
 
 
+def find_input_csv(directory="."):
+    path = Path(directory) / INPUT_PATH
+    if not path.exists():
+        sys.exit(f"ERROR: {INPUT_PATH} not found in {directory}")
+    return str(path)
+
+
+def load_done_ids(output_path):
+    if not Path(output_path).exists():
+        return set()
+    df = pd.read_csv(output_path, dtype=str)
+    if "scrape_status" not in df.columns or "Bid Solicitation #" not in df.columns:
+        return set()
+    return set(df.loc[df["scrape_status"] == "success", "Bid Solicitation #"].astype(str))
+
+
+def build_url(bid_id):
+    return f"{BASE_URL}?docId={bid_id}"
+
+
+def make_session():
+    session = requests.Session()
+    session.headers.update({"User-Agent": UA})
+    return session
+
+
+def fetch_page(session, url):
+    resp = session.get(url, timeout=30)
+    resp.raise_for_status()
+    return resp.text
+
+
 if __name__ == "__main__":
     cmd = sys.argv[1] if len(sys.argv) > 1 else "probe"
     if cmd == "probe":
