@@ -93,7 +93,7 @@ def test_build_ddl_contains_create_table():
 def test_build_ddl_pk_col_is_not_null():
     df = pd.DataFrame({"Bid No": ["1"], "Title": ["test"]})
     result = build_ddl("pa_solicitations", df, "bid_no")
-    assert "`bid_no` TEXT NOT NULL" in result
+    assert "`bid_no` VARCHAR(255) NOT NULL" in result
 
 
 def test_build_ddl_non_pk_col_has_no_not_null():
@@ -119,7 +119,7 @@ def test_build_ddl_normalizes_column_names():
 def test_build_ddl_int_col_uses_bigint():
     df = pd.DataFrame({"id": pd.array([1, 2], dtype="int64"), "name": ["a", "b"]})
     result = build_ddl("test_table", df, "id")
-    assert "`id` BIGINT NOT NULL" in result
+    assert "`id` VARCHAR(255) NOT NULL" in result
 
 
 def test_build_ddl_includes_charset():

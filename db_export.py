@@ -57,10 +57,10 @@ def build_ddl(table: str, df: pd.DataFrame, pk_norm: str) -> str:
     col_defs = []
     for col in df.columns:
         norm = normalize_col(col)
-        mysql_type = infer_mysql_type(df[col].dtype)
         if norm == pk_norm:
-            col_defs.append(f"  `{norm}` {mysql_type} NOT NULL")
+            col_defs.append(f"  `{norm}` VARCHAR(255) NOT NULL")
         else:
+            mysql_type = infer_mysql_type(df[col].dtype)
             col_defs.append(f"  `{norm}` {mysql_type}")
     col_defs.append(f"  PRIMARY KEY (`{pk_norm}`)")
     cols_sql = ",\n".join(col_defs)
