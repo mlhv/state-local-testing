@@ -4,7 +4,7 @@ import pandas as pd
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
-from scraper import find_input_csv, load_done_ids, build_url, SCRAPED_FIELDS
+from scraper import find_input_csv, load_done_ids, build_url, SCRAPED_FIELDS, extract_fields
 
 
 def test_find_input_csv_exits_when_none_found(tmp_path):
@@ -57,3 +57,63 @@ def test_build_url():
         "https://www.commbuys.com/bso/external/bidDetail.sda"
         "?docId=BD-25-1374-PROCU-PROCU-129995"
     )
+
+
+FIXTURE = Path(__file__).parent / "fixtures" / "sample_bid.html"
+
+
+def test_extract_fields_returns_all_keys():
+    html = FIXTURE.read_text(encoding="utf-8")
+    result = extract_fields(html)
+    expected_keys = [k for k in SCRAPED_FIELDS if k not in ("ma_url", "scrape_status")]
+    for key in expected_keys:
+        assert key in result, f"Missing key: {key}"
+
+
+def test_extract_fields_values_are_strings():
+    html = FIXTURE.read_text(encoding="utf-8")
+    result = extract_fields(html)
+    for key, val in result.items():
+        assert isinstance(val, str), f"{key} is not a string: {type(val)}"
+
+
+def test_extract_fields_no_empty_critical_fields():
+    html = FIXTURE.read_text(encoding="utf-8")
+    result = extract_fields(html)
+    assert result["bid_type"] != "", "bid_type should not be empty"
+    assert result["purchase_method"] != "", "purchase_method should not be empty"
+
+
+def test_pipe_delimited_items():
+    html = FIXTURE.read_text(encoding="utf-8")
+    result = extract_fields(html)
+    assert "|" in result["unspsc_codes"], "Expected pipe-delimited codes for 2+ item bid"
+    codes = result["unspsc_codes"].split("|")
+    descs = result["item_descriptions"].split("|")
+    unspsc_descs = result["unspsc_descriptions"].split("|")
+    assert len(codes) == len(descs) == len(unspsc_descs), "Item field lists must be same length"
+    assert all(c != "" for c in codes), "All UNSPSC codes should be non-empty"
+
+
+def test_output_row_has_all_columns():
+    input_row = {
+        "Bid Solicitation #": "BD-25-1374-PROCU-PROCU-129995",
+        "Organization Name": "Town of Winthrop",
+        "Blanket #": "",
+        "Buyer": "Dylan Cook",
+        "Description": "IFB 2027-06 Steel Work for RTU Install",
+        "Bid Opening Date": "06/11/2026 11:00:00",
+        "Bid Holder List": "",
+        "Awarded Vendor(s)": "",
+        "Status": "Sent",
+        "Alternate Id": "",
+    }
+    scraped = {k: "test_value" for k in SCRAPED_FIELDS if k not in ("scrape_status", "ma_url")}
+    scraped["scrape_status"] = "success"
+    scraped["ma_url"] = "https://www.commbuys.com/bso/external/bidDetail.sda?docId=BD-25-1374-PROCU-PROCU-129995"
+    output_row = {**input_row, **scraped}
+    for col in input_row:
+        assert col in output_row
+    for col in SCRAPED_FIELDS:
+        assert col in output_row
+    assert len(output_row) == 31  # 10 input + 21 scraped
