@@ -231,3 +231,107 @@ def test_upsert_rows_pk_excluded_from_update():
     # PK should NOT appear in the UPDATE clause
     update_part = sql_arg.split("ON DUPLICATE KEY UPDATE")[1]
     assert "`bid_no`" not in update_part
+
+
+def test_export_only_upserts_successful_rows(tmp_path, monkeypatch):
+    csv = tmp_path / "solicitations_enriched.csv"
+    csv.write_text(
+        "Bid No,Title,scrape_status\n"
+        "A001,Widget,success\n"
+        "B002,Gadget,error\n"
+        "C003,Sprocket,success\n"
+    )
+    monkeypatch.setitem(db_export.STATE_CONFIG, "pa", {
+        "csv_path": str(csv),
+        "table":    "pa_solicitations",
+        "pk_col":   "Bid No",
+    })
+    mock_conn   = MagicMock()
+    mock_cursor = MagicMock()
+    mock_conn.cursor.return_value.__enter__ = MagicMock(return_value=mock_cursor)
+    mock_conn.cursor.return_value.__exit__  = MagicMock(return_value=False)
+
+    with patch("db_export.connect_db", return_value=mock_conn):
+        db_export.export("pa")
+
+    # executemany is called for the upsert (execute is called for CREATE TABLE)
+    upsert_call = mock_cursor.executemany.call_args
+    rows = upsert_call[0][1]
+    assert len(rows) == 2
+    bid_nos = [r[0] for r in rows]
+    assert "A001" in bid_nos
+    assert "C003" in bid_nos
+    assert "B002" not in bid_nos
+
+
+def test_export_skips_null_pk_rows(tmp_path, monkeypatch):
+    csv = tmp_path / "solicitations_enriched.csv"
+    csv.write_text(
+        "Bid No,Title,scrape_status\n"
+        ",Missing PK,success\n"
+        "X001,Valid,success\n"
+    )
+    monkeypatch.setitem(db_export.STATE_CONFIG, "pa", {
+        "csv_path": str(csv),
+        "table":    "pa_solicitations",
+        "pk_col":   "Bid No",
+    })
+    mock_conn   = MagicMock()
+    mock_cursor = MagicMock()
+    mock_conn.cursor.return_value.__enter__ = MagicMock(return_value=mock_cursor)
+    mock_conn.cursor.return_value.__exit__  = MagicMock(return_value=False)
+
+    with patch("db_export.connect_db", return_value=mock_conn):
+        db_export.export("pa")
+
+    upsert_call = mock_cursor.executemany.call_args
+    rows = upsert_call[0][1]
+    assert len(rows) == 1
+    assert rows[0][0] == "X001"
+
+
+def test_export_prints_done_message(tmp_path, monkeypatch, capsys):
+    csv = tmp_path / "solicitations_enriched.csv"
+    csv.write_text("Bid No,scrape_status\nZ001,success\n")
+    monkeypatch.setitem(db_export.STATE_CONFIG, "pa", {
+        "csv_path": str(csv),
+        "table":    "pa_solicitations",
+        "pk_col":   "Bid No",
+    })
+    mock_conn   = MagicMock()
+    mock_cursor = MagicMock()
+    mock_conn.cursor.return_value.__enter__ = MagicMock(return_value=mock_cursor)
+    mock_conn.cursor.return_value.__exit__  = MagicMock(return_value=False)
+
+    with patch("db_export.connect_db", return_value=mock_conn):
+        db_export.export("pa")
+
+    out = capsys.readouterr().out
+    assert "pa_solicitations" in out
+    assert "Done" in out
+
+
+def test_export_closes_connection_on_success(tmp_path, monkeypatch):
+    csv = tmp_path / "solicitations_enriched.csv"
+    csv.write_text("Bid No,scrape_status\nZ001,success\n")
+    monkeypatch.setitem(db_export.STATE_CONFIG, "pa", {
+        "csv_path": str(csv),
+        "table":    "pa_solicitations",
+        "pk_col":   "Bid No",
+    })
+    mock_conn   = MagicMock()
+    mock_cursor = MagicMock()
+    mock_conn.cursor.return_value.__enter__ = MagicMock(return_value=mock_cursor)
+    mock_conn.cursor.return_value.__exit__  = MagicMock(return_value=False)
+
+    with patch("db_export.connect_db", return_value=mock_conn):
+        db_export.export("pa")
+
+    mock_conn.close.assert_called_once()
+
+
+def test_export_raises_for_unknown_state():
+    # The __main__ guard catches this before calling export(); export() itself
+    # raises KeyError so the CLI can exit with a helpful message.
+    with pytest.raises(KeyError):
+        db_export.export("unknown_state")

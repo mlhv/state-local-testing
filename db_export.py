@@ -122,3 +122,39 @@ def upsert_rows(conn, table: str, df: pd.DataFrame, pk_norm: str) -> int:
             print(f"[{upserted}/{total}] upserted...")
 
     return upserted
+
+
+def export(state: str):
+    config  = STATE_CONFIG[state]
+    pk_col  = config["pk_col"]
+    pk_norm = normalize_col(pk_col)
+
+    df = load_csv(config["csv_path"])
+    df = filter_successful(df)
+
+    null_mask  = df[pk_col].isna() | (df[pk_col].astype(str).str.strip() == "")
+    null_count = null_mask.sum()
+    if null_count:
+        print(f"WARNING: Skipping {null_count} rows with null/empty {pk_col!r}.")
+        df = df[~null_mask]
+
+    if df.empty:
+        print(f"No successful rows to export from {config['csv_path']}.")
+        return
+
+    conn = connect_db()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(build_ddl(config["table"], df, pk_norm))
+        conn.commit()
+        count = upsert_rows(conn, config["table"], df, pk_norm)
+        print(f"\nDone. {count} rows upserted to `{config['table']}`.")
+    finally:
+        conn.close()
+
+
+if __name__ == "__main__":
+    if len(sys.argv) != 2 or sys.argv[1] not in STATE_CONFIG:
+        valid = ", ".join(STATE_CONFIG.keys())
+        sys.exit(f"Usage: python db_export.py <state>\nValid states: {valid}")
+    export(sys.argv[1])
