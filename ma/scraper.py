@@ -5,12 +5,13 @@ Usage:
   python scraper.py run     -- process all new/errored records
 """
 
+import re as _re
 import sys
 import time
 import requests
 import pandas as pd
 from pathlib import Path
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, NavigableString
 
 INPUT_PATH = "bidSearchResults.csv"
 OUTPUT_PATH = "solicitations_enriched.csv"
@@ -84,8 +85,6 @@ def fetch_page(session, url):
 # HTML extraction helpers
 # ---------------------------------------------------------------------------
 
-import re as _re
-
 
 def _normalize(text):
     """Collapse internal whitespace so multi-line label TDs compare cleanly."""
@@ -141,8 +140,6 @@ def _extract_items(soup):
     The UNSPSC top-level code is the first <u> tag in the tableText-01 value
     TD that follows a 'U N S P S C Code:' label TD.
     """
-    import bs4 as _bs4
-
     tds = list(soup.find_all("td"))
     item_descs = []
     codes = []
@@ -182,7 +179,7 @@ def _extract_items(soup):
                         unspsc_code = u_tag.get_text(strip=True)
                     # Description is the first non-empty NavigableString after <br/>
                     for child in value_td.children:
-                        if isinstance(child, _bs4.NavigableString):
+                        if isinstance(child, NavigableString):
                             t2 = str(child).replace("\xa0", "").strip()
                             if t2:
                                 unspsc_desc = t2
