@@ -79,3 +79,50 @@ def test_load_csv_reads_all_as_string(tmp_path):
 def test_load_csv_exits_when_missing():
     with pytest.raises(SystemExit):
         load_csv("/nonexistent/path.csv")
+
+
+from db_export import build_ddl
+
+
+def test_build_ddl_contains_create_table():
+    df = pd.DataFrame({"Bid No": ["1"], "Title": ["test"]})
+    result = build_ddl("pa_solicitations", df, "bid_no")
+    assert "CREATE TABLE IF NOT EXISTS `pa_solicitations`" in result
+
+
+def test_build_ddl_pk_col_is_not_null():
+    df = pd.DataFrame({"Bid No": ["1"], "Title": ["test"]})
+    result = build_ddl("pa_solicitations", df, "bid_no")
+    assert "`bid_no` TEXT NOT NULL" in result
+
+
+def test_build_ddl_non_pk_col_has_no_not_null():
+    df = pd.DataFrame({"Bid No": ["1"], "Title": ["test"]})
+    result = build_ddl("pa_solicitations", df, "bid_no")
+    assert "`title` TEXT\n" in result or "`title` TEXT," in result
+
+
+def test_build_ddl_has_primary_key_clause():
+    df = pd.DataFrame({"Bid No": ["1"], "Title": ["test"]})
+    result = build_ddl("pa_solicitations", df, "bid_no")
+    assert "PRIMARY KEY (`bid_no`)" in result
+
+
+def test_build_ddl_normalizes_column_names():
+    df = pd.DataFrame({"Bid No": ["1"], "Buyer Name": ["Alice"]})
+    result = build_ddl("pa_solicitations", df, "bid_no")
+    assert "`bid_no`" in result
+    assert "`buyer_name`" in result
+    assert "`Bid No`" not in result
+
+
+def test_build_ddl_int_col_uses_bigint():
+    df = pd.DataFrame({"id": pd.array([1, 2], dtype="int64"), "name": ["a", "b"]})
+    result = build_ddl("test_table", df, "id")
+    assert "`id` BIGINT NOT NULL" in result
+
+
+def test_build_ddl_includes_charset():
+    df = pd.DataFrame({"id": ["1"]})
+    result = build_ddl("t", df, "id")
+    assert "utf8mb4" in result

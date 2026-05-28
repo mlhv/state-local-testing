@@ -51,3 +51,21 @@ def load_csv(csv_path: str) -> pd.DataFrame:
     if not Path(csv_path).exists():
         sys.exit(f"ERROR: CSV not found: {csv_path}")
     return pd.read_csv(csv_path, dtype=object)
+
+
+def build_ddl(table: str, df: pd.DataFrame, pk_norm: str) -> str:
+    col_defs = []
+    for col in df.columns:
+        norm = normalize_col(col)
+        mysql_type = infer_mysql_type(df[col].dtype)
+        if norm == pk_norm:
+            col_defs.append(f"  `{norm}` {mysql_type} NOT NULL")
+        else:
+            col_defs.append(f"  `{norm}` {mysql_type}")
+    col_defs.append(f"  PRIMARY KEY (`{pk_norm}`)")
+    cols_sql = ",\n".join(col_defs)
+    return (
+        f"CREATE TABLE IF NOT EXISTS `{table}` (\n"
+        f"{cols_sql}\n"
+        f") DEFAULT CHARSET=utf8mb4"
+    )
