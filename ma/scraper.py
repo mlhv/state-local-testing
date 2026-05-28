@@ -221,6 +221,108 @@ def extract_fields(html):
     }
 
 
+def probe():
+    input_csv = find_input_csv(".")
+    df = pd.read_csv(input_csv, dtype=str)
+    done_ids = load_done_ids(OUTPUT_PATH)
+
+    new_rows = df[~df["Bid Solicitation #"].astype(str).isin(done_ids)]
+    if new_rows.empty:
+        print("No new solicitations to probe.")
+        return
+
+    row = new_rows.iloc[0]
+    bid_id = str(row["Bid Solicitation #"])
+    url = build_url(bid_id)
+    print(f"Probing: {url}\n")
+
+    session = make_session()
+    try:
+        html = fetch_page(session, url)
+    except Exception as e:
+        sys.exit(f"ERROR fetching {url}: {e}")
+    fields = extract_fields(html)
+
+    print("=== Header Information ===")
+    print(f"Department:             {fields['department']}")
+    print(f"Location:               {fields['location']}")
+    print(f"Fiscal Year:            {fields['fiscal_year']}")
+    print(f"Type Code:              {fields['type_code']}")
+    print(f"Allow Electronic Quote: {fields['allow_electronic_quote']}")
+    print(f"Required Date:          {fields['required_date']}")
+    print(f"Available Date:         {fields['available_date']}")
+    print(f"Info Contact:           {fields['info_contact']}")
+    print(f"Bid Type:               {fields['bid_type']}")
+    print(f"Informal Bid Flag:      {fields['informal_bid_flag']}")
+    print(f"Purchase Method:        {fields['purchase_method']}")
+    print(f"\n=== Pre Bid Conference ===")
+    print(fields["pre_bid_conference"] or "(none)")
+    print(f"\n=== Bulletin Desc ===")
+    bd = fields["bulletin_desc"]
+    print(bd[:500] + ("..." if len(bd) > 500 else ""))
+    print(f"\n=== Contact (Ship-to) ===")
+    print(f"Email: {fields['ship_to_email']}")
+    print(f"Phone: {fields['ship_to_phone']}")
+    print(f"\n=== SBPP Eligibility ===")
+    print(f"SBPP Eligible: {fields['sbpp_eligible'] or '(not specified)'}")
+    item_count = len([c for c in fields["unspsc_codes"].split("|") if c])
+    print(f"\n=== Items ({item_count} item(s)) ===")
+    for i, (code, code_desc, item_desc) in enumerate(zip(
+        fields["unspsc_codes"].split("|"),
+        fields["unspsc_descriptions"].split("|"),
+        fields["item_descriptions"].split("|"),
+    ), 1):
+        print(f"Item {i}: UNSPSC {code} — {code_desc}")
+        print(f"  Desc: {item_desc[:200]}{'...' if len(item_desc) > 200 else ''}")
+
+
+def run():
+    input_csv = find_input_csv(".")
+    df = pd.read_csv(input_csv, dtype=str)
+    done_ids = load_done_ids(OUTPUT_PATH)
+
+    to_scrape = df[~df["Bid Solicitation #"].astype(str).isin(done_ids)]
+    total_new = len(to_scrape)
+    print(f"Input: {len(df)} rows. Already done: {len(done_ids)}. To scrape: {total_new}")
+
+    if total_new == 0:
+        print("Nothing to do.")
+        return
+
+    enriched = []
+    if Path(OUTPUT_PATH).exists():
+        all_rows = pd.read_csv(OUTPUT_PATH, dtype=str).to_dict("records")
+        enriched = [r for r in all_rows if r.get("scrape_status") == "success"]
+
+    session = make_session()
+    success_count = 0
+    error_count = 0
+
+    for i, (_, row) in enumerate(to_scrape.iterrows(), 1):
+        bid_id = str(row["Bid Solicitation #"])
+        url = build_url(bid_id)
+        print(f"[{i}/{total_new}] {url}")
+
+        try:
+            html = fetch_page(session, url)
+            scraped = extract_fields(html)
+            scraped["ma_url"] = url
+            scraped["scrape_status"] = "success"
+            success_count += 1
+        except Exception as e:
+            print(f"  ERROR: {e}")
+            scraped = EMPTY_SCRAPED.copy()
+            scraped["ma_url"] = url
+            scraped["scrape_status"] = "error"
+            error_count += 1
+
+        enriched.append({**row.to_dict(), **scraped})
+        pd.DataFrame(enriched).to_csv(OUTPUT_PATH, index=False)
+        time.sleep(DELAY_SECONDS)
+
+    print(f"\nDone. {success_count} succeeded, {error_count} errored. Output: {OUTPUT_PATH}")
+
+
 if __name__ == "__main__":
     cmd = sys.argv[1] if len(sys.argv) > 1 else "probe"
     if cmd == "probe":
