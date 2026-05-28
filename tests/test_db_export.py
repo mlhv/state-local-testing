@@ -126,3 +126,50 @@ def test_build_ddl_includes_charset():
     df = pd.DataFrame({"id": ["1"]})
     result = build_ddl("t", df, "id")
     assert "utf8mb4" in result
+
+
+import db_export
+import pymysql
+from unittest.mock import patch, MagicMock
+from db_export import connect_db
+
+
+def test_connect_db_exits_when_user_missing(monkeypatch):
+    monkeypatch.delenv("DB_USER", raising=False)
+    monkeypatch.delenv("DB_NAME", raising=False)
+    with patch("db_export.load_dotenv"):
+        with pytest.raises(SystemExit):
+            connect_db()
+
+
+def test_connect_db_exits_when_db_name_missing(monkeypatch):
+    monkeypatch.setenv("DB_USER", "root")
+    monkeypatch.delenv("DB_NAME", raising=False)
+    with patch("db_export.load_dotenv"):
+        with pytest.raises(SystemExit):
+            connect_db()
+
+
+def test_connect_db_exits_on_connection_error(monkeypatch):
+    monkeypatch.setenv("DB_USER", "root")
+    monkeypatch.setenv("DB_NAME", "procurement")
+    monkeypatch.setenv("DB_HOST", "localhost")
+    monkeypatch.setenv("DB_PORT", "3306")
+    monkeypatch.setenv("DB_PASSWORD", "")
+    with patch("db_export.load_dotenv"):
+        with patch("db_export.pymysql.connect", side_effect=pymysql.Error("refused")):
+            with pytest.raises(SystemExit):
+                connect_db()
+
+
+def test_connect_db_returns_connection(monkeypatch):
+    monkeypatch.setenv("DB_USER", "root")
+    monkeypatch.setenv("DB_NAME", "procurement")
+    monkeypatch.setenv("DB_HOST", "localhost")
+    monkeypatch.setenv("DB_PORT", "3306")
+    monkeypatch.setenv("DB_PASSWORD", "")
+    mock_conn = MagicMock()
+    with patch("db_export.load_dotenv"):
+        with patch("db_export.pymysql.connect", return_value=mock_conn):
+            result = connect_db()
+    assert result is mock_conn

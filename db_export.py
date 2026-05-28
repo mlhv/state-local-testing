@@ -69,3 +69,25 @@ def build_ddl(table: str, df: pd.DataFrame, pk_norm: str) -> str:
         f"{cols_sql}\n"
         f") DEFAULT CHARSET=utf8mb4"
     )
+
+
+def connect_db():
+    load_dotenv()
+    host     = os.getenv("DB_HOST", "localhost")
+    port     = int(os.getenv("DB_PORT", "3306"))
+    user     = os.getenv("DB_USER")
+    password = os.getenv("DB_PASSWORD", "")
+    db       = os.getenv("DB_NAME")
+
+    if not user or not db:
+        sys.exit(
+            "ERROR: DB_USER and DB_NAME must be set.\n"
+            "Copy .env.example to .env and fill in your credentials."
+        )
+    try:
+        return pymysql.connect(
+            host=host, port=port, user=user,
+            password=password, database=db, charset="utf8mb4",
+        )
+    except pymysql.Error as e:
+        sys.exit(f"ERROR: Could not connect to MySQL: {e}")
