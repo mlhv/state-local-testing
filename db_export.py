@@ -39,3 +39,15 @@ def infer_mysql_type(dtype) -> str:
     if pd.api.types.is_float_dtype(dtype):
         return "DOUBLE"
     return "TEXT"
+
+
+def filter_successful(df: pd.DataFrame) -> pd.DataFrame:
+    if "scrape_status" not in df.columns:
+        return df.copy()
+    return df[df["scrape_status"] == "success"].copy()
+
+
+def load_csv(csv_path: str) -> pd.DataFrame:
+    if not Path(csv_path).exists():
+        sys.exit(f"ERROR: CSV not found: {csv_path}")
+    return pd.read_csv(csv_path, dtype=object)
