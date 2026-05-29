@@ -3,7 +3,7 @@ MySQL export utility for state procurement scrapers.
 Usage:
   python db_export.py <state>   -- export enriched CSV to MySQL
 
-Valid states: pa, cali
+Valid states: pa, cali,, etc...
 """
 
 import os
@@ -23,6 +23,11 @@ STATE_CONFIG = {
         "csv_path": "cali/events_enriched.csv",
         "table":    "cali_events",
         "pk_col":   "Event ID",
+    },
+    "ma": {
+        "csv_path": "ma/solicitations_enriched.csv",
+        "table":    "ma_solicitations",
+        "pk_col":   "Bid Solicitation #",
     },
 }
 
