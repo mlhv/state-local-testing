@@ -61,3 +61,10 @@ def test_parse_list_page_no_pager_means_one_page():
     html = "<html><body><table><thead><tr><th>Sourcing Project Number</th></tr></thead><tbody></tbody></table></body></html>"
     _, total_pages = scraper.parse_list_page(html)
     assert total_pages == 1
+
+
+def test_parse_list_page_table_without_tbody():
+    html = "<html><body><table><tr><td>data</td></tr></table></body></html>"
+    rows, total_pages = scraper.parse_list_page(html)
+    assert rows == []
+    assert total_pages == 1

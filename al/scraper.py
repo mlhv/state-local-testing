@@ -119,8 +119,12 @@ def parse_list_page(html):
     if not table:
         return [], total_pages
 
+    tbody = table.find("tbody")
+    if not tbody:
+        return [], total_pages
+
     rows = []
-    for tr in table.find("tbody").find_all("tr"):
+    for tr in tbody.find_all("tr"):
         cells = tr.find_all("td")
         if len(cells) < len(COLUMN_KEYS):
             continue
