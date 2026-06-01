@@ -1,7 +1,9 @@
 import pandas as pd
 import pytest
+import requests
 from pathlib import Path
 import sys
+from unittest.mock import patch
 import responses as responses_lib
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -79,7 +81,12 @@ def test_discover_solicitations_filters_open_only():
     # Mock the POST for page 2 — return same HTML (one open, one closed row)
     responses_lib.add(responses_lib.POST, scraper.AJAX_URL, body=html, status=200)
 
-    result = scraper.discover_solicitations()
+    # make_session() uses Playwright for browser-check bypass; patch it out so
+    # unit tests run without launching a real browser.
+    fake_session = requests.Session()
+    with patch.object(scraper, "make_session", return_value=fake_session):
+        result = scraper.discover_solicitations()
+
     # Only the "Open for Bidding" rows from both pages
     assert len(result) == 2  # 1 open from page 1 + 1 open from page 2 (same fixture)
     assert all(r["status"] == "Open for Bidding" for r in result)
