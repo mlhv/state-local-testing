@@ -2,6 +2,7 @@ import pandas as pd
 import pytest
 from pathlib import Path
 import sys
+import responses as responses_lib
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 import scraper
@@ -68,3 +69,18 @@ def test_parse_list_page_table_without_tbody():
     rows, total_pages = scraper.parse_list_page(html)
     assert rows == []
     assert total_pages == 1
+
+
+@responses_lib.activate
+def test_discover_solicitations_filters_open_only():
+    html = (FIXTURE_DIR / "sample_list_page.html").read_text()
+    # Mock the GET for page 1 (fixture has 2 total pages shown by pager)
+    responses_lib.add(responses_lib.GET, scraper.BROWSE_URL, body=html, status=200)
+    # Mock the POST for page 2 — return same HTML (one open, one closed row)
+    responses_lib.add(responses_lib.POST, scraper.AJAX_URL, body=html, status=200)
+
+    result = scraper.discover_solicitations()
+    # Only the "Open for Bidding" rows from both pages
+    assert len(result) == 2  # 1 open from page 1 + 1 open from page 2 (same fixture)
+    assert all(r["status"] == "Open for Bidding" for r in result)
+    assert all(r["src_code"] == "SRC0000034127" for r in result)

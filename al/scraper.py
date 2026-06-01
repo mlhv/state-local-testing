@@ -140,3 +140,53 @@ def parse_list_page(html):
         rows.append(row)
 
     return rows, total_pages
+
+
+_BASE_PAYLOAD = {
+    "__EVENTTARGET": "body_x_grid_grd",
+    "__LASTFOCUS": "",
+    "REQUEST_METHOD": "POST",
+    "hdnUserValue": "",
+    "x_headaction": "",
+    "x_headloginName": "",
+    "hdnMandatory": "0",
+    "hdnWflAction": "",
+    "body:_ctl0": "",
+    "body:x:txtQuery": "",
+    "body:x:selFamily": "",
+    "body_x_selFamily_text": "",
+    "header:x:prxHeaderLogInfo:x:ContrastModal:chkContrastTheme_radio": "true",
+    "header:x:prxHeaderLogInfo:x:ContrastModal:chkContrastTheme": "True",
+    "header:x:prxHeaderLogInfo:x:ContrastModal:chkPassiveNotification": "0",
+    "proxyActionBar:x:txtWflRefuseMessage": "",
+}
+
+
+def _pagination_payload(page_n):
+    payload = dict(_BASE_PAYLOAD)
+    payload["__EVENTARGUMENT"] = f"Page|{page_n}"
+    payload["__LASTFOCUS"] = f"body_x_grid_gridPagerBtn{page_n}Page"
+    return payload
+
+
+def discover_solicitations():
+    """
+    Paginate all pages of the public solicitations list.
+    Returns list of row dicts (LIST_FIELDS) filtered to status == "Open for Bidding".
+    """
+    session = make_session()
+
+    resp = session.get(BROWSE_URL, timeout=30)
+    resp.raise_for_status()
+    page1_rows, total_pages = parse_list_page(resp.text)
+
+    all_rows = list(page1_rows)
+
+    for page_n in range(2, total_pages + 1):
+        time.sleep(DELAY_SECONDS)
+        resp = session.post(AJAX_URL, data=_pagination_payload(page_n), timeout=30)
+        resp.raise_for_status()
+        rows, _ = parse_list_page(resp.text)
+        all_rows.extend(rows)
+
+    return [r for r in all_rows if r.get("status") == "Open for Bidding"]
