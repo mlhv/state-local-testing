@@ -109,3 +109,10 @@ def test_extract_fields_missing_field_returns_empty():
     assert fields["round_number"] == ""
     assert fields["begin_date"] == ""
     assert fields["summary"] == ""
+
+
+def test_label_value_text_node_sibling():
+    html = "<html><body><div><strong>Code</strong> SRC0000034127</div></body></html>"
+    from bs4 import BeautifulSoup
+    soup = BeautifulSoup(html, "html.parser")
+    assert scraper._label_value(soup, "Code") == "SRC0000034127"

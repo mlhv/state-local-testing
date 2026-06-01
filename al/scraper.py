@@ -195,15 +195,22 @@ def discover_solicitations():
 def _label_value(soup, label_text):
     """
     Find the first element whose text matches label_text, then return
-    the text of the next sibling element. Works for <strong>/<span> pairs
-    and <div>/<div> pairs common in Ivalua portals.
+    the adjacent value. Handles three structures common in Ivalua portals:
+      1. Text node sibling: <strong>Label</strong> value text
+      2. Tag sibling:       <strong>Label</strong><span>value</span>
+      3. Grandparent sibling: <div><strong>Label</strong></div><div>value</div>
     """
     for el in soup.find_all(string=lambda t: t and t.strip() == label_text):
         parent = el.parent
-        sibling = parent.find_next_sibling()
-        if sibling:
-            return sibling.get_text(separator=" ", strip=True).replace("\xa0", " ").strip()
-        # Try parent's parent next sibling (nested structure)
+        # Case 1: immediate text-node sibling
+        raw = parent.next_sibling
+        if raw and isinstance(raw, str) and raw.strip():
+            return raw.strip().replace("\xa0", " ").strip()
+        # Case 2: next tag sibling
+        tag_sibling = parent.find_next_sibling()
+        if tag_sibling:
+            return tag_sibling.get_text(separator=" ", strip=True).replace("\xa0", " ").strip()
+        # Case 3: grandparent's next tag sibling (nested structure)
         grandparent_sibling = parent.parent.find_next_sibling() if parent.parent else None
         if grandparent_sibling:
             return grandparent_sibling.get_text(separator=" ", strip=True).replace("\xa0", " ").strip()
