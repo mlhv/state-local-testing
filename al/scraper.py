@@ -248,17 +248,15 @@ def discover_solicitations(session=None):
     Paginate all pages of the public solicitations list.
     Returns list of row dicts (LIST_FIELDS) filtered to status == "Open for Bidding".
 
-    Page 1 is fetched via the same AJAX POST as subsequent pages — the initial
-    GET only establishes the session cookie; the grid itself is always populated
-    via the AJAX endpoint.
+    Page 1 is fetched via the same AJAX POST as subsequent pages — the grid is
+    always populated via the AJAX endpoint, never the initial GET response.
 
     Pass an existing session to reuse it (avoids a second reCAPTCHA challenge).
+    make_session() already navigates to BROWSE_URL via Playwright, so no
+    additional GET is needed to establish cookies here.
     """
     if session is None:
         session = make_session()
-
-    # Establish session cookie — don't parse rows from the GET (grid is empty)
-    session.get(BROWSE_URL, timeout=30).raise_for_status()
 
     all_rows = []
     page_n = 1
