@@ -115,6 +115,15 @@ python scraper.py run
 
 **Known gaps:** S3 upload, DB normalization, Chrome must be closed during run (profile lock conflict)
 
+**Known issue — reCAPTCHA reliability:** Playwright with a fresh Chrome context occasionally fails the reCAPTCHA score check (low score due to no browsing history/cookies in the new context). Workaround: wait ~60s and retry. A more reliable alternative is `browser-cookie3` (reads the session cookie from your real Chrome browser after you visit the site manually) — this was tested and works but requires Chrome to have visited the site first each session. To try it: `pip install browser-cookie3`, visit `https://www.alabamabuys.gov` in normal Chrome, then replace `make_session()` with:
+```python
+import browser_cookie3
+cj = browser_cookie3.chrome(domain_name=".alabamabuys.gov")
+session = requests.Session()
+session.headers.update({"User-Agent": UA})
+session.cookies.update(cj)
+```
+
 ---
 
 ## Next States to Investigate
