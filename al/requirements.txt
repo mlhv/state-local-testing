@@ -1,5 +1,5 @@
 requests
 pandas
 beautifulsoup4
-playwright
+browser-cookie3
 responses

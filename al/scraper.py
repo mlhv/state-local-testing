@@ -15,7 +15,6 @@ from bs4 import BeautifulSoup
 OUTPUT_PATH = "solicitations_enriched.csv"
 DELAY_SECONDS = 0.5
 BROWSE_URL = "https://www.alabamabuys.gov/page.aspx/en/rfp/request_browse_public"
-BROWSER_CHECK_URL = "https://www.alabamabuys.gov/page.aspx/en/bas/browser_check"
 AJAX_URL = (
     "https://www.alabamabuys.gov/ajax.aspx/en/rfp/request_browse_public"
     "?ivControlUIDsAsync=body:x:grid:upgrid"
@@ -63,61 +62,41 @@ def load_done_ids(output_path):
 
 def make_session():
     """
-    Return a requests.Session pre-loaded with cookies that bypass the Alabama BUYS
-    reCAPTCHA browser-check page.
+    Return a requests.Session pre-loaded with Alabama BUYS cookies from your
+    real Chrome browser.
 
-    The portal uses Google reCAPTCHA Enterprise (invisible v3 mode).  A real Chromium
-    browser must execute the captcha JS, score the session, POST the token, and be
-    redirected to the intended page before we can extract a valid session cookie.
+    Alabama BUYS uses reCAPTCHA Enterprise. Rather than launching an automated
+    browser (which reCAPTCHA detects and blocks), we read the session cookie
+    that Chrome already has after you visit the site as a normal human.
 
-    Strategy:
-      1. Launch real Chrome (non-headless) so reCAPTCHA sees a human-like environment.
-      2. Navigate to the list page (redirects to browser_check automatically).
-      3. Wait up to 60 s for the URL to leave browser_check (captcha auto-submits).
-      4. Transfer the resulting ASP.NET_SessionId cookie to a requests.Session.
+    Before running probe or run:
+      1. Open https://www.alabamabuys.gov in your normal Chrome browser.
+      2. The reCAPTCHA will pass automatically (you're a real human).
+      3. Run the scraper — it reads the cookie Chrome stored on disk.
+
+    The session cookie typically lasts several hours. If you get a browser-check
+    error mid-run, re-visit the site in Chrome and re-run.
     """
     try:
-        from playwright.sync_api import sync_playwright
+        import browser_cookie3
     except ImportError:
         sys.exit(
-            "ERROR: playwright is required to pass the Alabama BUYS browser check.\n"
-            "Install it with: pip install playwright && playwright install chromium"
+            "ERROR: browser-cookie3 is required.\n"
+            "Install it with: pip install browser-cookie3"
         )
 
-    chrome_exe = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
-
-    with sync_playwright() as p:
-        browser = p.chromium.launch(
-            executable_path=chrome_exe,
-            headless=False,
-            args=["--no-sandbox"],
-        )
-        context = browser.new_context(
-            user_agent=UA,
-            viewport={"width": 1920, "height": 1080},
-        )
-        page = context.new_page()
-        # Navigate to the list page — the portal redirects to browser_check first
-        page.goto(BROWSE_URL, wait_until="domcontentloaded", timeout=30_000)
-        # Wait up to 60 s for reCAPTCHA to auto-submit and redirect back
-        try:
-            page.wait_for_url(
-                lambda url: "browser_check" not in url,
-                timeout=60_000,
-            )
-        except Exception:
-            browser.close()
-            sys.exit(
-                "ERROR: Alabama BUYS browser check did not complete within 60 s.\n"
-                "The reCAPTCHA may have flagged the browser as a bot.  Try again."
-            )
-        cookies = context.cookies()
-        browser.close()
-
+    cj = browser_cookie3.chrome(domain_name=".alabamabuys.gov")
     session = requests.Session()
     session.headers.update({"User-Agent": UA})
-    for c in cookies:
-        session.cookies.set(c["name"], c["value"], domain=c["domain"])
+    session.cookies.update(cj)
+
+    # Verify we actually got a session cookie
+    if not any(c.name == "ASP.NET_SessionId" for c in session.cookies):
+        sys.exit(
+            "ERROR: No Alabama BUYS session cookie found in Chrome.\n"
+            "Visit https://www.alabamabuys.gov in Chrome first, then re-run."
+        )
+
     return session
 
 
