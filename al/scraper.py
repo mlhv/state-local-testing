@@ -225,3 +225,100 @@ def extract_fields(html):
         "begin_date":   _label_value(soup, "Begin"),
         "summary":      _label_value(soup, "Summary"),
     }
+
+
+def probe():
+    print("Discovering solicitations (paginating list)...")
+    open_rows = discover_solicitations()
+    done_ids = load_done_ids(OUTPUT_PATH)
+
+    new_rows = [r for r in open_rows if r["src_code"] not in done_ids]
+    if not new_rows:
+        print("No new open solicitations to probe.")
+        return
+
+    row = new_rows[0]
+    url = "https://www.alabamabuys.gov" + row["detail_href"]
+    print(f"Probing: {url}\n")
+
+    session = make_session()
+    try:
+        resp = session.get(url, timeout=30)
+        resp.raise_for_status()
+        fields = extract_fields(resp.text)
+    except Exception as e:
+        sys.exit(f"ERROR fetching {url}: {e}")
+
+    print("=== List Fields ===")
+    print(f"SRC Code:        {row['src_code']}")
+    print(f"Label:           {row['solicitation_label']}")
+    print(f"Status:          {row['status']}")
+    print(f"Award Status:    {row['award_status']}")
+    print(f"Due/Close Date:  {row['due_close_date']}")
+    print(f"Main Commodity:  {row['main_commodity']}")
+    print(f"Sol. Type:       {row['solicitation_type']}")
+    print(f"Buying Agency:   {row['buying_agency']}")
+    print(f"Contact:         {row['sourcing_responsible_first']} {row['sourcing_responsible_last']}")
+    print(f"\n=== Detail Fields ===")
+    print(f"Round #:         {fields['round_number']}")
+    print(f"Begin Date:      {fields['begin_date']}")
+    print(f"\n=== Summary ===")
+    summary = fields["summary"]
+    print(summary[:500] + ("..." if len(summary) > 500 else ""))
+
+
+def run():
+    print("Discovering solicitations (paginating list)...")
+    open_rows = discover_solicitations()
+    done_ids = load_done_ids(OUTPUT_PATH)
+
+    to_scrape = [r for r in open_rows if r["src_code"] not in done_ids]
+    total_new = len(to_scrape)
+    print(f"Open: {len(open_rows)}. Already done: {len(done_ids)}. To scrape: {total_new}")
+
+    if total_new == 0:
+        print("Nothing to do.")
+        return
+
+    enriched = []
+    if Path(OUTPUT_PATH).exists():
+        all_rows = pd.read_csv(OUTPUT_PATH, dtype=str).to_dict("records")
+        enriched = [r for r in all_rows if r.get("scrape_status") == "success"]
+
+    session = make_session()
+    success_count = 0
+    error_count = 0
+
+    for i, row in enumerate(to_scrape, 1):
+        url = "https://www.alabamabuys.gov" + row["detail_href"]
+        print(f"[{i}/{total_new}] {url}")
+
+        try:
+            resp = session.get(url, timeout=30)
+            resp.raise_for_status()
+            scraped = extract_fields(resp.text)
+            scraped["alabama_url"] = url
+            scraped["scrape_status"] = "success"
+            success_count += 1
+        except Exception as e:
+            print(f"  ERROR: {e}")
+            scraped = EMPTY_SCRAPED.copy()
+            scraped["alabama_url"] = url
+            scraped["scrape_status"] = "error"
+            error_count += 1
+
+        enriched.append({**row, **scraped})
+        pd.DataFrame(enriched).to_csv(OUTPUT_PATH, index=False)
+        time.sleep(DELAY_SECONDS)
+
+    print(f"\nDone. {success_count} succeeded, {error_count} errored. Output: {OUTPUT_PATH}")
+
+
+if __name__ == "__main__":
+    cmd = sys.argv[1] if len(sys.argv) > 1 else "probe"
+    if cmd == "probe":
+        probe()
+    elif cmd == "run":
+        run()
+    else:
+        print(__doc__)
