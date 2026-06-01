@@ -190,3 +190,31 @@ def discover_solicitations():
         all_rows.extend(rows)
 
     return [r for r in all_rows if r.get("status") == "Open for Bidding"]
+
+
+def _label_value(soup, label_text):
+    """
+    Find the first element whose text matches label_text, then return
+    the text of the next sibling element. Works for <strong>/<span> pairs
+    and <div>/<div> pairs common in Ivalua portals.
+    """
+    for el in soup.find_all(string=lambda t: t and t.strip() == label_text):
+        parent = el.parent
+        sibling = parent.find_next_sibling()
+        if sibling:
+            return sibling.get_text(separator=" ", strip=True).replace("\xa0", " ").strip()
+        # Try parent's parent next sibling (nested structure)
+        grandparent_sibling = parent.parent.find_next_sibling() if parent.parent else None
+        if grandparent_sibling:
+            return grandparent_sibling.get_text(separator=" ", strip=True).replace("\xa0", " ").strip()
+    return ""
+
+
+def extract_fields(html):
+    """Parse Solicitation General Information from a detail page."""
+    soup = BeautifulSoup(html, "html.parser")
+    return {
+        "round_number": _label_value(soup, "Round #"),
+        "begin_date":   _label_value(soup, "Begin"),
+        "summary":      _label_value(soup, "Summary"),
+    }

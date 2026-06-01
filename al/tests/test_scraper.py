@@ -84,3 +84,28 @@ def test_discover_solicitations_filters_open_only():
     assert len(result) == 2  # 1 open from page 1 + 1 open from page 2 (same fixture)
     assert all(r["status"] == "Open for Bidding" for r in result)
     assert all(r["src_code"] == "SRC0000034127" for r in result)
+
+
+def test_extract_fields_round_number():
+    html = (FIXTURE_DIR / "sample_solicitation_detail.html").read_text()
+    fields = scraper.extract_fields(html)
+    assert fields["round_number"] == "1"
+
+
+def test_extract_fields_begin_date():
+    html = (FIXTURE_DIR / "sample_solicitation_detail.html").read_text()
+    fields = scraper.extract_fields(html)
+    assert fields["begin_date"] == "5/29/2026 4:44:49 PM (CST)"
+
+
+def test_extract_fields_summary():
+    html = (FIXTURE_DIR / "sample_solicitation_detail.html").read_text()
+    fields = scraper.extract_fields(html)
+    assert "Troubleshoot" in fields["summary"]
+
+
+def test_extract_fields_missing_field_returns_empty():
+    fields = scraper.extract_fields("<html><body></body></html>")
+    assert fields["round_number"] == ""
+    assert fields["begin_date"] == ""
+    assert fields["summary"] == ""
