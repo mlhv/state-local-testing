@@ -15,6 +15,7 @@ Aggregate state government procurement opportunities into a common dataset feedi
 | California | ✅ Complete | `cali/` | calEProcure | Manual XLS export | `events_enriched.csv` (24 cols) |
 | Pennsylvania | ✅ Complete | `pa/` | PA eMarketplace | Manual CSV export | `solicitations_enriched.csv` (28 cols) |
 | Massachusetts | ✅ Complete | `ma/` | COMMBUYS | Manual CSV export | `solicitations_enriched.csv` (31 cols) |
+| Alabama | ✅ Complete | `al/` | Alabama BUYS (Ivalua) | No export — list scraped directly | `solicitations_enriched.csv` (15 cols) |
 
 ---
 
@@ -87,6 +88,32 @@ python scraper.py run
 2. **DB normalization** — map state-specific fields to common schema; load alongside SAM.gov data
 3. **NAICS/UNSPSC crosswalk** — CA outputs UNSPSC codes, SAM.gov uses NAICS
 4. **Automated input export** — both states require a manual download step before each run
+
+---
+
+## Alabama (Alabama BUYS)
+
+**Portal:** https://www.alabamabuys.gov/page.aspx/en/rfp/request_browse_public
+
+**How it works:** Ivalua-based portal with no CSV export and Google reCAPTCHA Enterprise on the browse page. `make_session()` launches real Chrome (non-headless) via Playwright to pass the browser check, extracts the session cookie, then hands off to `requests` for all subsequent calls. The list grid is populated via AJAX POST (not the initial GET response) — `discover_solicitations()` POSTs to `ajax.aspx` for every page including page 1. Status filtering is done client-side (server-side filter is broken). Detail pages use Ivalua's `data-iv-role="field"/"control"` structure parsed with BeautifulSoup.
+
+**Run:**
+```bash
+cd al
+source ../venv/bin/activate
+# Install playwright browsers first time: playwright install chromium
+# Chrome must be closed when running (profile lock)
+python scraper.py probe
+python scraper.py run
+```
+
+**Key technical notes:**
+- reCAPTCHA requires non-headless Chrome; headless mode fails the score check
+- One session per run — session is created once and reused for list + all detail fetches
+- No manual export step — the scraper discovers all open solicitations itself
+- Detail URL is extracted from list HTML (not derivable from SRC code — numeric IDs don't map to SRC numbers)
+
+**Known gaps:** S3 upload, DB normalization, Chrome must be closed during run (profile lock conflict)
 
 ---
 
