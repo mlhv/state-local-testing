@@ -49,3 +49,18 @@ SCRAPED_FIELDS = [
 ]
 
 EMPTY_SCRAPED = {k: "" for k in SCRAPED_FIELDS}
+
+
+def load_done_ids(output_path):
+    if not Path(output_path).exists():
+        return set()
+    df = pd.read_csv(output_path, dtype=str)
+    if "scrape_status" not in df.columns or "src_code" not in df.columns:
+        return set()
+    return set(df.loc[df["scrape_status"] == "success", "src_code"].astype(str))
+
+
+def make_session():
+    session = requests.Session()
+    session.headers.update({"User-Agent": UA})
+    return session
