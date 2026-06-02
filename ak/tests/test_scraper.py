@@ -102,3 +102,18 @@ class TestParseListRow:
         row = scraper.parse_list_row(self.raw_row)
         assert row["status"] == "M"
         assert row["category_code"] == "145"
+
+
+class TestExtractInstructions:
+    def setup_method(self):
+        with open(FIXTURES / "sample_inst_response.json") as f:
+            self.resp = json.load(f)
+
+    def test_extracts_addl_info(self):
+        result = scraper.extract_instructions(self.resp)
+        assert "400Hz dual output solid-state Ground Power Unit" in result["additional_instructions"]
+
+    def test_empty_string_when_no_rows(self):
+        resp = {"data": {"ds_data": {"T1SO_DOC_HDR": {"row_data": []}}}}
+        result = scraper.extract_instructions(resp)
+        assert result["additional_instructions"] == ""

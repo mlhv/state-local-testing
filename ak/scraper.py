@@ -66,6 +66,18 @@ def load_done_ids(output_path: str) -> set:
     return set(df.loc[df["scrape_status"] == "success", "doc_ref"].astype(str))
 
 
+def extract_instructions(response: dict) -> dict:
+    """Extract ADDL_INFO from a navSolicitation tab-change response."""
+    rows = (
+        response.get("data", {})
+        .get("ds_data", {})
+        .get("T1SO_DOC_HDR", {})
+        .get("row_data", [])
+    )
+    addl_info = rows[0].get("ADDL_INFO", "") if rows else ""
+    return {"additional_instructions": addl_info}
+
+
 def parse_list_row(row: dict) -> dict:
     """Extract list fields from a single T1SO_SRCH_QRY row_data entry."""
     return {

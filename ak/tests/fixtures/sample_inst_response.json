@@ -1,0 +1,43 @@
+{
+  "data": {
+    "ds_data": {
+      "T1SO_DOC_HDR": {
+        "row_data": [
+          {
+            "ADV_ROW_ID": "Bo04AFNfuP1vhgV4",
+            "SRCH_DOC_ID": "RFQ-09-260000015-2",
+            "ADDL_INFO": "The State of Alaska, Department of Military and Veterans Affairs (DMVA), Alaska Air National Guard is soliciting for quotes from qualified vendors to provide one (1) 400Hz dual output solid-state Ground Power Unit (GPU) as specified in the attached Request for Quotes (RFQ)."
+          }
+        ]
+      }
+    }
+  },
+  "session_info": {
+    "session_id": "3feff59447e0d3f6",
+    "page_id": "98772138390642301339",
+    "csrf_token": "soMJ4iLfSZZXSpd2JN3b"
+  },
+  "checksum": {
+    "VIEW": {
+      "SolicitationDocumentView": 70985443,
+      "solicitationInstView": 3784087706,
+      "generalInfoView": 2598906815,
+      "commoditiesView": 2215349693
+    },
+    "DS_DATA": {
+      "T1SO_DOC_HDR": 4274830125,
+      "T3SO_DOC_COMMLN": 2082338324,
+      "T2SO_DOC_COMMGP": 137053144
+    },
+    "DATASOURCE": {
+      "T3SO_DOC_COMMLN": 1245200392,
+      "T1SO_DOC_HDR": 2926664375,
+      "T2SO_DOC_COMMGP": 2496649304
+    }
+  },
+  "viewState": {
+    "vss.page.VSSSolicitationDocument": {
+      "closed": false, "hidden": false, "editable": false, "protected": false, "required": false
+    }
+  }
+}
