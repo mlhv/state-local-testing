@@ -91,6 +91,28 @@ Always run commands from inside the state's folder so relative paths (input CSV 
 | California | `cali/` | calEProcure | requests + JSON | InFlight NLX POST API — no HTML parsing needed. See `cali/HANDOFF.md` for API details. |
 | Pennsylvania | `pa/` | PA eMarketplace | requests + BeautifulSoup | Server-rendered XHTML. BASE_URL must include `www.` |
 
+## Known Techniques
+
+### reCAPTCHA Enterprise bypass (patchright + persistent context + warmup)
+
+**When to use:** Portal redirects to a browser-check page on first visit, or returns empty/blocked responses to plain `requests` calls. Look for "protected by reCAPTCHA" badge or a `browser_check` URL in the redirect chain.
+
+**How it works:**
+1. Install `patchright` (patched Playwright that strips automation fingerprints) and launch Chrome via `launch_persistent_context` pointing at a dedicated profile directory (`~/.al_scraper_profile` or similar). The persistent profile accumulates cookies and history between runs, which reCAPTCHA scores positively.
+2. Before navigating to the target portal, warm up by visiting `https://www.google.com` and `https://www.bing.com` (2 s each). This deposits Google-domain cookies on the first run — reCAPTCHA Enterprise reads these since it's a Google product.
+3. Navigate to the portal list page, wait for reCAPTCHA to auto-submit and redirect away from `browser_check`.
+4. Extract cookies from the context and load them into a `requests.Session` for all subsequent calls.
+
+**Reference implementation:** `al/scraper.py` → `make_session()`. The profile path is `USER_DATA_DIR = Path.home() / ".al_scraper_profile"`.
+
+**Install:** `pip install patchright && patchright install chromium`
+
+**Notes:**
+- First run uses an empty profile and may be slower to pass; subsequent runs benefit from accumulated state.
+- Use `channel="chrome"` to launch your local Chrome installation via patchright (not the bundled Chromium). Requires Chrome to be installed.
+- `headless=False` is required — reCAPTCHA Enterprise detects headless mode.
+- Do NOT point `user_data_dir` at your real Chrome profile (`~/Library/Application Support/Google/Chrome`) unless Chrome is fully quit — it holds a lock on that directory.
+
 ## Starting a New State
 
 1. Create `<state>/` folder and empty `scraper.py`
