@@ -112,14 +112,23 @@ def make_session():
         page = context.new_page()
 
         def on_response(response):
-            if BASE_URL in response.url and not captured:
+            if BASE_URL in response.url:
                 try:
                     body = response.json()
                     si = body.get("session_info", {})
+                    page_key = (body.get("page_metadata") or {}).get("key", "")
+                    print(f"[DEBUG] Response page_key={page_key!r}, si keys={list(si.keys())}")
+                    # Capture session_id/csrf_token from any response (they're stable)
                     if si.get("session_id"):
-                        captured.update(si)
-                except Exception:
-                    pass
+                        for k in ("session_id", "csrf_token"):
+                            if k in si:
+                                captured[k] = si[k]
+                    # Only capture page_id from the VVSSX10019 solicitations search page
+                    if "VVSSX10019" in page_key and si.get("page_id"):
+                        captured["page_id"] = si["page_id"]
+                        print(f"[DEBUG] Captured page_id from VVSSX10019: {si['page_id']}")
+                except Exception as exc:
+                    print(f"[DEBUG] on_response error ({response.url}): {exc}")
 
         page.on("response", on_response)
 
@@ -135,19 +144,42 @@ def make_session():
         page.goto(PORTAL_URL, wait_until="networkidle", timeout=60_000)
         time.sleep(2)
 
-        # Click into Solicitations to trigger an Advantage4 API call
+        # Click into Solicitations — this triggers navigation to VVSSX10019 search page
+        # Use expect_response context manager to synchronously wait for VVSSX10019 response
+        def _is_vss_x10019(resp):
+            if BASE_URL not in resp.url:
+                return False
+            try:
+                body = resp.json()
+                page_key = (body.get("page_metadata") or {}).get("key", "")
+                return "VVSSX10019" in page_key
+            except Exception:
+                return False
+
         try:
-            page.click("text=Solicitations", timeout=10_000)
-            page.wait_for_load_state("networkidle", timeout=30_000)
-        except Exception:
-            pass
+            with page.expect_response(_is_vss_x10019, timeout=60_000) as resp_info:
+                page.click("text=Solicitations", timeout=10_000)
+            # Force-process the response to extract session tokens
+            vss_resp = resp_info.value
+            try:
+                vss_body = vss_resp.json()
+                si = vss_body.get("session_info", {})
+                if si.get("session_id"):
+                    captured.update({k: si[k] for k in si})
+                    print(f"[DEBUG] Captured via expect_response: {si}")
+            except Exception as e:
+                print(f"[DEBUG] expect_response body parse error: {e}")
+        except Exception as e:
+            print(f"[DEBUG] expect_response error: {e}")
+            # fall back to networkidle
+            try:
+                page.wait_for_load_state("networkidle", timeout=30_000)
+            except Exception:
+                pass
+            time.sleep(3)
 
-        # Wait up to 30 s for session tokens to be captured
-        deadline = time.time() + 30
-        while not captured and time.time() < deadline:
-            time.sleep(0.5)
-
-        if not captured:
+        print(f"[DEBUG] Final captured keys: {list(captured.keys())}")
+        if not all(k in captured for k in ("session_id", "page_id", "csrf_token")):
             context.close()
             sys.exit(
                 "ERROR: Could not capture IRIS VSS session tokens.\n"
@@ -221,6 +253,9 @@ def _raw_search(session: requests.Session, ctx: dict) -> list:
     resp = session.post(BASE_URL, json=payload, headers=headers, timeout=30)
     resp.raise_for_status()
     body = resp.json()
+    import json as _json
+    print(f"[DEBUG] _raw_search response status: {resp.status_code}")
+    print(f"[DEBUG] _raw_search full response (first 3000 chars):\n{_json.dumps(body)[:3000]}")
     _update_ctx(ctx, body)
     ds = body["data"]["ds_data"]["T1SO_SRCH_QRY"]
     if ds.get("rows_total", 0) > ds.get("rows_per_page", 20):
@@ -447,3 +482,46 @@ def ms_to_iso(ms) -> str:
         return datetime.datetime.fromtimestamp(int(ms) / 1000, tz=datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     except (ValueError, TypeError):
         return ""
+
+
+def probe():
+    session, ctx = make_session()
+    print("Discovering open solicitations...")
+    raw_rows = _raw_search(session, ctx)
+    done_ids = load_done_ids(OUTPUT_PATH)
+
+    new_raw = [
+        r for r in raw_rows
+        if parse_doc_ref(r.get("DOC_REF", "")) not in done_ids
+    ]
+    if not new_raw:
+        print("No new open solicitations to probe.")
+        return
+
+    raw_row = new_raw[0]
+    doc_ref = parse_doc_ref(raw_row.get("DOC_REF", ""))
+    print(f"\nProbing: {doc_ref} — {raw_row.get('DOC_DSCR', '')}")
+
+    try:
+        detail = fetch_detail(session, ctx, raw_row)
+    except Exception as e:
+        sys.exit(f"ERROR fetching detail: {e}")
+
+    list_fields = parse_list_row(raw_row)
+    print("\n=== List Fields ===")
+    for k, v in list_fields.items():
+        print(f"  {k}: {v}")
+    print("\n=== Detail Fields ===")
+    for k, v in detail.items():
+        val = v[:300] + "..." if isinstance(v, str) and len(v) > 300 else v
+        print(f"  {k}: {val}")
+
+
+if __name__ == "__main__":
+    cmd = sys.argv[1] if len(sys.argv) > 1 else "probe"
+    if cmd == "probe":
+        probe()
+    elif cmd == "run":
+        run()
+    else:
+        print(__doc__)
