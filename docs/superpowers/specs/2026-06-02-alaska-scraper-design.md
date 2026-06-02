@@ -87,7 +87,13 @@ Pagination fields: `rows_total`, `rows_per_page`, `end_data_window`.
 
 **Detail flow (3 calls per solicitation):**
 
-1. `docTransition` — `actionCode: "docTransition"`, `actionType: "transitionAction"`, keyed on `ADV_ROW_ID`. Exact payload structure to be captured during `probe` development. Response returns new `session_info`.
+1. `docTransition` — navigates to the solicitation document. Key payload fields:
+   - `action.columnValue`: `"RFQ,09,260000015,2"` — parsed from the first `[...]` of `DOC_REF` in the list row.
+   - `action.key`: `"vss.page.VVSSX10019.gridView1.group1.cardGrid.grid1.solNumTypCat.DOC_REF.DOC_REF_Detail"` (static)
+   - `checksum.VIEW` and `viewState`: replayed from the search response; `checksum.DS_DATA.T1SO_SRCH_QRY` is hardcoded `"-1"` (string).
+   - `data.ds_data.T1SO_SRCH_QRY.row_data`: full row data for the selected solicitation with `ADV_ROW_SEL: true`.
+   - `session_info`: current tokens from the search response.
+   Response returns new `session_info` (session_id, page_id, csrf_token) used for subsequent tab-change calls.
 
 2. Tab change to Solicitation Instructions:
 ```json
@@ -163,6 +169,7 @@ ak/
 - `discover_solicitations(session, session_info)` → `list[dict]` — paginates list API, applies Open filter, returns parsed rows.
 - `fetch_detail(session, session_info, adv_row_id, request_id)` → `dict` — three sequential POSTs: docTransition → tabChange(Solicitation Instructions) → tabChange(Commodity Lines). Session tokens from each response used in the next call. Returns merged detail fields.
 - `parse_doc_ref(raw: str)` → `str` — extracts `RFQ-09-260000015-2` from `[...][RFQ-09-260000015-2]`.
+- `parse_column_value(raw: str)` → `str` — extracts `RFQ,09,260000015,2` from `[RFQ,09,260000015,2][...]` (used as `columnValue` in docTransition payload).
 - `ms_to_iso(ms: int | str)` → `str` — converts ms epoch to ISO 8601 string; returns `""` on empty.
 - `load_done_ids(output_path)` → `set[str]` — reads existing CSV, returns `doc_ref` values with `scrape_status = success`.
 - `probe()` — discover list, pick first new record, print all fields.
@@ -206,7 +213,7 @@ python scraper.py run     # session → all new/errored → write solicitations_
 
 ## Known Unknowns
 
-- **`docTransition` POST payload**: exact JSON body structure for navigating to a solicitation detail is not yet captured. Will be discovered by inspecting the Network tab when clicking a solicitation row during probe development.
+- ~~**`docTransition` POST payload**~~ — resolved: see API Details above.
 - **Commodity Lines tab payload**: `tabName`/`viewName` and commodity field names (`T3SO_DOC_COMMLN` row fields) are not yet captured. To be discovered during probe development.
 - **Checksum/viewState fields**: the list POST payload includes `checksum` and `viewState` blobs that may need to be replayed exactly. Values will be captured from the initial page load response.
 - **Session token location**: `Adv-Session-Id`, `page_id`, `csrf_token` are embedded somewhere in the initial page HTML or a bootstrap API call — exact extraction method TBD during probe development.
