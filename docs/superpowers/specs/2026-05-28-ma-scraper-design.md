@@ -156,6 +156,5 @@ ma/
 
 ## Known Gaps (shared with all states)
 
-- S3 upload after each run
 - DB normalization / common schema mapping
 - Automated input export (manual CSV download remains a prerequisite)

@@ -117,6 +117,5 @@ beautifulsoup4
 ## Future Tasks (out of scope for this implementation)
 
 - Automate the CSV export step by reverse-engineering the Export Search Results POST request
-- S3 upload of raw output keyed by date (`raw/pa-emarketplace/YYYY-MM-DD/solicitations_enriched.csv`)
 - Parallelization (multiple concurrent sessions for faster runs)
 - Schema normalization to map PA fields to the common DB schema alongside SAM.gov / CA records

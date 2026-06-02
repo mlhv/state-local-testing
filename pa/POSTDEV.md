@@ -10,7 +10,7 @@
 | API | No direct public REST API. Data is exposed through server-rendered XHTML pages (ASP.NET). |
 | API limitation | No documented public API<br>Manual CSV export required for solicitation list<br>Possible request throttling if scraping aggressively |
 | API Expiration | N/A |
-| How to extract the data | Manually export open solicitation list as CSV from PA eMarketplace search page<br>Send HTTP GET requests to each new solicitation's detail page<br>Parse HTML responses with BeautifulSoup and extract full procurement fields<br>Write enriched data to local CSV incrementally<br>Upload raw CSV to S3 bucket (not yet implemented)<br>Normalize extracted fields into standard schema (not yet implemented) |
+| How to extract the data | Manually export open solicitation list as CSV from PA eMarketplace search page<br>Send HTTP GET requests to each new solicitation's detail page<br>Parse HTML responses with BeautifulSoup and extract full procurement fields<br>Write enriched data to local CSV incrementally<br>Normalize extracted fields into standard schema (not yet implemented) |
 | Methods | requests<br>BeautifulSoup<br>HTML parsing<br>Session handling |
 
 # 2. Data Extracted
@@ -40,5 +40,4 @@
 None identified in initial run. Known limitations and pending work:
 
 - **Manual CSV export** — the input solicitation list must be downloaded by hand from the PA eMarketplace search page before each run. Automating this step (reverse-engineering the Export Search Results POST request) is a separate future task.
-- **S3 upload** — raw output CSV should be uploaded to S3 keyed by run date. Not yet implemented.
 - **DB normalization** — field mapping to the common schema alongside SAM.gov and CA records is not yet implemented.

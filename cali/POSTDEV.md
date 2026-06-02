@@ -10,7 +10,7 @@
 | API | No direct public REST API. Data is injected into the page via an internal InFlight NLX JSON API (POST endpoint) on top of PeopleSoft ERP. Called directly without a browser. |
 | API limitation | No documented public API<br>Manual XLS export required for the solicitation list<br>Downloaded XLS is actually HTML-disguised — must be re-saved from Excel as real XLS before use<br>Session cookie (InFlightSessionID) must be established via an initial GET before POSTing<br>Custom 278 redirect must be followed manually (requests does not auto-follow non-3xx redirects) |
 | API Expiration | N/A |
-| How to extract the data | Manually export active bid list as XLS from calEProcure search page<br>Re-save the XLS from Excel (file is HTML-disguised as XLS on download)<br>Send POST requests to the InFlight NLX JSON endpoint for each new event<br>Parse structured JSON responses and extract all procurement fields<br>Write enriched data to local CSV incrementally<br>Upload raw CSV to S3 bucket (not yet implemented)<br>Normalize extracted fields into standard schema (not yet implemented) |
+| How to extract the data | Manually export active bid list as XLS from calEProcure search page<br>Re-save the XLS from Excel (file is HTML-disguised as XLS on download)<br>Send POST requests to the InFlight NLX JSON endpoint for each new event<br>Parse structured JSON responses and extract all procurement fields<br>Write enriched data to local CSV incrementally<br>Normalize extracted fields into standard schema (not yet implemented) |
 | Methods | requests<br>JSON parsing<br>Session handling<br>Manual 278 redirect following |
 
 # 2. Data Extracted
@@ -46,5 +46,4 @@
 Known pending work:
 
 - **Manual XLS export** — the input event list must be downloaded by hand from calEProcure. Automating this step is a separate future task (the signed XLS download URL is available in the NLX search response JSON).
-- **S3 upload** — raw output CSV should be uploaded to S3 keyed by run date. Not yet implemented.
 - **DB normalization** — field mapping to the common schema alongside SAM.gov and PA records is not yet implemented. Note: calEProcure uses UNSPSC codes; SAM.gov uses NAICS — a crosswalk will be needed.

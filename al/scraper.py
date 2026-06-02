@@ -26,6 +26,7 @@ UA = (
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
     "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
 )
+USER_DATA_DIR = Path.home() / ".al_scraper_profile"
 
 LIST_FIELDS = [
     "src_code",
@@ -77,26 +78,35 @@ def make_session():
       4. Transfer the resulting ASP.NET_SessionId cookie to a requests.Session.
     """
     try:
-        from playwright.sync_api import sync_playwright
+        from patchright.sync_api import sync_playwright
     except ImportError:
         sys.exit(
             "ERROR: playwright is required to pass the Alabama BUYS browser check.\n"
             "Install it with: pip install playwright && playwright install chromium"
         )
 
-    chrome_exe = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
-
     with sync_playwright() as p:
-        browser = p.chromium.launch(
-            executable_path=chrome_exe,
+        context = p.chromium.launch_persistent_context(
+            user_data_dir=str(USER_DATA_DIR),
             headless=False,
-            args=["--no-sandbox"],
-        )
-        context = browser.new_context(
-            user_agent=UA,
-            viewport={"width": 1920, "height": 1080},
+            channel="chrome",
         )
         page = context.new_page()
+
+        # Warm up the profile so reCAPTCHA sees a browsing history and Google cookies.
+        # On the very first run the profile is empty; visiting google.com first deposits
+        # real Google-domain cookies that reCAPTCHA Enterprise uses to raise the score.
+        _WARMUP_URLS = [
+            "https://www.google.com",
+            "https://www.bing.com",
+        ]
+        for warmup_url in _WARMUP_URLS:
+            try:
+                page.goto(warmup_url, wait_until="domcontentloaded", timeout=15_000)
+                time.sleep(2)
+            except Exception:
+                pass  # warmup failure is non-fatal
+
         # Navigate to the list page — the portal redirects to browser_check first
         page.goto(BROWSE_URL, wait_until="domcontentloaded", timeout=30_000)
         # Wait up to 60 s for reCAPTCHA to auto-submit and redirect back
@@ -106,13 +116,13 @@ def make_session():
                 timeout=60_000,
             )
         except Exception:
-            browser.close()
+            context.close()
             sys.exit(
                 "ERROR: Alabama BUYS browser check did not complete within 60 s.\n"
                 "The reCAPTCHA may have flagged the browser as a bot.  Try again."
             )
         cookies = context.cookies()
-        browser.close()
+        context.close()
 
     session = requests.Session()
     session.headers.update({"User-Agent": UA})

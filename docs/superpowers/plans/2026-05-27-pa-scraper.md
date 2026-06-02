@@ -773,6 +773,5 @@ git commit -m "feat(pa): add run command — full incremental scrape pipeline"
 ## Future Tasks (out of scope)
 
 - Automate the CSV export step (reverse-engineer the Export Search Results POST)
-- S3 upload: `raw/pa-emarketplace/YYYY-MM-DD/solicitations_enriched.csv`
 - Parallelization with multiple concurrent sessions
 - Schema normalization for DB import alongside SAM.gov / CA records

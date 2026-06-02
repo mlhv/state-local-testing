@@ -734,7 +734,7 @@ python scraper.py run
 
 **Key files:** `ma/POSTDEV.md` (post-dev notes), `ma/tests/` (11 tests)
 
-**Known gaps:** S3 upload, DB normalization, automated CSV export
+**Known gaps:** DB normalization, automated CSV export
 ```
 
 - [ ] **Step 3: Commit**

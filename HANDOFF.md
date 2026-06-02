@@ -36,7 +36,7 @@ python scraper.py run
 
 **Key files:** `cali/HANDOFF.md` (full API docs), `cali/POSTDEV.md`, `cali/nlx_body.txt` (static POST body — only needs recapturing if the site redesigns)
 
-**Known gaps:** S3 upload, DB normalization, automated XLS export
+**Known gaps:** DB normalization, automated XLS export
 
 ---
 
@@ -57,7 +57,7 @@ python scraper.py run
 
 **Key files:** `pa/README.md` (run instructions), `pa/POSTDEV.md`, `pa/tests/` (11 tests)
 
-**Known gaps:** S3 upload, DB normalization, automated CSV export
+**Known gaps:** DB normalization, automated CSV export
 
 ---
 
@@ -78,16 +78,15 @@ python scraper.py run
 
 **Key files:** `ma/tests/` (11 tests)
 
-**Known gaps:** S3 upload, DB normalization, automated CSV export
+**Known gaps:** DB normalization, automated CSV export
 
 ---
 
 ## Shared Pending Work
 
-1. **S3 upload** — upload raw output after each run: `s3://bucket/raw/<state>/YYYY-MM-DD/<file>.csv`
-2. **DB normalization** — map state-specific fields to common schema; load alongside SAM.gov data
-3. **NAICS/UNSPSC crosswalk** — CA outputs UNSPSC codes, SAM.gov uses NAICS
-4. **Automated input export** — both states require a manual download step before each run
+1. **DB normalization** — map state-specific fields to common schema; load alongside SAM.gov data
+2. **NAICS/UNSPSC crosswalk** — CA outputs UNSPSC codes, SAM.gov uses NAICS
+3. **Automated input export** — both states require a manual download step before each run
 
 ---
 
@@ -109,20 +108,14 @@ python scraper.py run
 
 **Key technical notes:**
 - reCAPTCHA requires non-headless Chrome; headless mode fails the score check
+- `make_session()` uses `patchright` (patched Playwright) + `launch_persistent_context` pointing at `~/.al_scraper_profile`. Before hitting alabamabuys.gov it warms up the profile by visiting google.com and bing.com — this deposits Google-domain cookies that reCAPTCHA Enterprise scores positively. The profile accumulates more state on each run, making it more reliable over time.
 - One session per run — session is created once and reused for list + all detail fetches
 - No manual export step — the scraper discovers all open solicitations itself
 - Detail URL is extracted from list HTML (not derivable from SRC code — numeric IDs don't map to SRC numbers)
 
-**Known gaps:** S3 upload, DB normalization, Chrome must be closed during run (profile lock conflict)
+**Known gaps:** DB normalization
 
-**Known issue — reCAPTCHA reliability:** Playwright with a fresh Chrome context occasionally fails the reCAPTCHA score check (low score due to no browsing history/cookies in the new context). Workaround: wait ~60s and retry. A more reliable alternative is `browser-cookie3` (reads the session cookie from your real Chrome browser after you visit the site manually) — this was tested and works but requires Chrome to have visited the site first each session. To try it: `pip install browser-cookie3`, visit `https://www.alabamabuys.gov` in normal Chrome, then replace `make_session()` with:
-```python
-import browser_cookie3
-cj = browser_cookie3.chrome(domain_name=".alabamabuys.gov")
-session = requests.Session()
-session.headers.update({"User-Agent": UA})
-session.cookies.update(cj)
-```
+**Install note:** `pip install patchright && patchright install chromium` required on first setup.
 
 ---
 

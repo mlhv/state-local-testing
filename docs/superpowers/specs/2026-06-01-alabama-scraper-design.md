@@ -186,7 +186,6 @@ No new dependencies. Uses `requests`, `pandas`, `beautifulsoup4` — all already
 
 ## Known Gaps
 
-- **S3 upload** — shared pending work across all states
 - **DB normalization** — shared pending work
 - **Solicitation Documents** — PDF attachment links not captured; could be added later
 - **Session sensitivity** — if Ivalua starts requiring CSRF tokens or ViewState for public pages, the session cookie strategy will need revisiting

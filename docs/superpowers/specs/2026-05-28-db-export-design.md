@@ -136,6 +136,5 @@ The teammate copies this to `.env` and fills in their values. If `.env` is missi
 
 ## Out of Scope
 
-- S3 upload (tracked in CLAUDE.md as pending)
 - DB normalization / common schema across states (tracked in CLAUDE.md as pending)
 - Automated invocation — this is a manual tool for the teammate

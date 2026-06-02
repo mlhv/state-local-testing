@@ -103,7 +103,6 @@ Always run commands from inside the state's folder so relative paths (input CSV 
 
 ## Pending Work (all states)
 
-- **S3 upload** — raw output CSV should be uploaded after each run: `raw/<state>/<YYYY-MM-DD>/<output>.csv`
 - **DB normalization** — map state fields to common schema alongside SAM.gov records
 - **NAICS/UNSPSC crosswalk** — CA uses UNSPSC codes; SAM.gov uses NAICS
 - **Automated input export** — manual CSV/XLS download is a known limitation for both CA and PA

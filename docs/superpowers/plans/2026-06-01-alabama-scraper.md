@@ -890,7 +890,7 @@ python scraper.py probe
 python scraper.py run
 ```
 
-**Known gaps:** S3 upload, DB normalization, Solicitation Documents (PDF links) not captured
+**Known gaps:** DB normalization, Solicitation Documents (PDF links) not captured
 ```
 
 - [ ] **Step 3: Commit**
