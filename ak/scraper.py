@@ -57,6 +57,15 @@ _COMM_TAB_KEY = (
 )
 
 
+def load_done_ids(output_path: str) -> set:
+    if not Path(output_path).exists():
+        return set()
+    df = pd.read_csv(output_path, dtype=str)
+    if "scrape_status" not in df.columns or "doc_ref" not in df.columns:
+        return set()
+    return set(df.loc[df["scrape_status"] == "success", "doc_ref"].astype(str))
+
+
 def parse_doc_ref(raw: str) -> str:
     """Extract 'RFQ-09-260000015-2' from '[RFQ,09,260000015,2][RFQ-09-260000015-2]'."""
     first_close = raw.index("]")
