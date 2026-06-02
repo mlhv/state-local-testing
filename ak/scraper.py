@@ -66,6 +66,24 @@ def load_done_ids(output_path: str) -> set:
     return set(df.loc[df["scrape_status"] == "success", "doc_ref"].astype(str))
 
 
+def parse_list_row(row: dict) -> dict:
+    """Extract list fields from a single T1SO_SRCH_QRY row_data entry."""
+    return {
+        "doc_ref":       parse_doc_ref(row.get("DOC_REF", "")),
+        "doc_type":      row.get("DOC_CD_CONCAT", ""),
+        "description":   row.get("DOC_DSCR", ""),
+        "department":    row.get("DEPT_NM", ""),
+        "buyer_name":    row.get("BUYR_NM", ""),
+        "buyer_email":   row.get("BUYR_EMAIL_AD", ""),
+        "buyer_phone":   row.get("BUYR_PH_NO", ""),
+        "closing_dt":    ms_to_iso(row.get("SO_CLSNG_DT_TM", "")),
+        "publish_dt":    ms_to_iso(row.get("PUB_DT", "")),
+        "amended_dt":    ms_to_iso(row.get("AMND_DT", "")),
+        "status":        row.get("SO_STA", ""),
+        "category_code": row.get("SO_CAT_CD", ""),
+    }
+
+
 def parse_doc_ref(raw: str) -> str:
     """Extract 'RFQ-09-260000015-2' from '[RFQ,09,260000015,2][RFQ-09-260000015-2]'."""
     first_close = raw.index("]")

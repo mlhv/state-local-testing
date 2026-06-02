@@ -35,6 +35,10 @@ class TestMsToIso:
 
 
 import tempfile, os
+import json
+from pathlib import Path
+
+FIXTURES = Path(__file__).parent / "fixtures"
 
 class TestLoadDoneIds:
     def test_returns_empty_set_when_no_file(self, tmp_path):
@@ -57,3 +61,44 @@ class TestLoadDoneIds:
         csv.write_text("col_a,col_b\nfoo,bar\n")
         result = scraper.load_done_ids(str(csv))
         assert result == set()
+
+
+class TestParseListRow:
+    def setup_method(self):
+        with open(FIXTURES / "sample_list_response.json") as f:
+            resp = json.load(f)
+        self.raw_row = resp["data"]["ds_data"]["T1SO_SRCH_QRY"]["row_data"][0]
+
+    def test_doc_ref(self):
+        row = scraper.parse_list_row(self.raw_row)
+        assert row["doc_ref"] == "RFQ-09-260000015-2"
+
+    def test_doc_type(self):
+        row = scraper.parse_list_row(self.raw_row)
+        assert row["doc_type"] == "Request for Quotes (RFQ)"
+
+    def test_description(self):
+        row = scraper.parse_list_row(self.raw_row)
+        assert row["description"] == "H21 400Hz GPU"
+
+    def test_department(self):
+        row = scraper.parse_list_row(self.raw_row)
+        assert row["department"] == "Department of Military and Veterans' Affairs"
+
+    def test_buyer_fields(self):
+        row = scraper.parse_list_row(self.raw_row)
+        assert row["buyer_name"] == "DAVID BAKER"
+        assert row["buyer_email"] == "david.baker@alaska.gov"
+        assert row["buyer_phone"] == "907-428-7220"
+
+    def test_timestamps_converted_to_iso(self):
+        row = scraper.parse_list_row(self.raw_row)
+        # 1780524000000 ms = 2026-06-03T22:00:00Z (2 PM AKDT = UTC-8)
+        assert row["closing_dt"] == "2026-06-03T22:00:00Z"
+        # 1779436800000 ms — verify with actual conversion
+        assert row["publish_dt"] == scraper.ms_to_iso(1779436800000)
+
+    def test_status_and_category(self):
+        row = scraper.parse_list_row(self.raw_row)
+        assert row["status"] == "M"
+        assert row["category_code"] == "145"

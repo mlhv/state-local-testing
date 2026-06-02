@@ -1,0 +1,47 @@
+{
+  "data": {
+    "ds_data": {
+      "T1SO_SRCH_QRY": {
+        "rows_total": 1,
+        "rows_per_page": 20,
+        "end_data_window": 1,
+        "row_data": [
+          {
+            "ADV_ROW_ID": "Wkzn3MKijwsLyp7H",
+            "ADV_ROW_SEL": false,
+            "SHOW_TXT": "",
+            "SO_CAT_CD": "145",
+            "SO_STA": "M",
+            "DOC_CD": "RFQ",
+            "DOC_DSCR": "H21 400Hz GPU",
+            "DEPT_NM": "Department of Military and Veterans' Affairs",
+            "BUYR_NM": "DAVID BAKER",
+            "DOC_REF": "[RFQ,09,260000015,2][RFQ-09-260000015-2]",
+            "DOC_CD_CONCAT": "Request for Quotes (RFQ)",
+            "SO_CLSNG_DT_TM": 1780524000000,
+            "PUB_DT": 1779436800000,
+            "AMND_DT": 1779436800000,
+            "BUYR_EMAIL_AD": "david.baker@alaska.gov",
+            "BUYR_PH_NO": "907-428-7220",
+            "BUYR_FAX_NO": ""
+          }
+        ]
+      }
+    }
+  },
+  "session_info": {
+    "session_id": "3fe929365bd83b00",
+    "page_id": "5816087771366880920",
+    "csrf_token": "XnZRj25GgAEkWRFF3mmp"
+  },
+  "checksum": {
+    "VIEW": {"gridView1": 3838637284},
+    "DS_DATA": {"T1SO_SRCH_QRY": 3352782786},
+    "DATASOURCE": {"T1SO_SRCH_QRY": 1650476997}
+  },
+  "viewState": {
+    "vss.page.VVSSX10019.gridView1.group1.cardSearch": {"editable": true},
+    "vss.page.VVSSX10019.gridView1.group1.cardSearch.search1": {"editable": true},
+    "vss.page.VVSSX10019": {"closed": false, "hidden": false, "editable": false, "protected": false, "required": false}
+  }
+}
