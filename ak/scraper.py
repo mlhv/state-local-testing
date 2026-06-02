@@ -55,3 +55,28 @@ _COMM_TAB_KEY = (
     "vss.page.VSSSolicitationDocument"
     ".SolicitationDocumentView.wizardNavLinks.navCommodity"
 )
+
+
+def parse_doc_ref(raw: str) -> str:
+    """Extract 'RFQ-09-260000015-2' from '[RFQ,09,260000015,2][RFQ-09-260000015-2]'."""
+    first_close = raw.index("]")
+    second_open = raw.index("[", first_close)
+    second_close = raw.index("]", second_open)
+    return raw[second_open + 1:second_close]
+
+
+def parse_column_value(raw: str) -> str:
+    """Extract 'RFQ,09,260000015,2' from '[RFQ,09,260000015,2][...]' for docTransition."""
+    first_open = raw.index("[")
+    first_close = raw.index("]", first_open)
+    return raw[first_open + 1:first_close]
+
+
+def ms_to_iso(ms) -> str:
+    """Convert millisecond epoch to ISO 8601 UTC string. Returns '' for falsy input."""
+    if not ms:
+        return ""
+    try:
+        return datetime.datetime.utcfromtimestamp(int(ms) / 1000).strftime("%Y-%m-%dT%H:%M:%SZ")
+    except (ValueError, TypeError):
+        return ""
