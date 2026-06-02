@@ -77,6 +77,6 @@ def ms_to_iso(ms) -> str:
     if not ms:
         return ""
     try:
-        return datetime.datetime.utcfromtimestamp(int(ms) / 1000).strftime("%Y-%m-%dT%H:%M:%SZ")
+        return datetime.datetime.fromtimestamp(int(ms) / 1000, tz=datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     except (ValueError, TypeError):
         return ""
