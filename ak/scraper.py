@@ -57,6 +57,334 @@ _COMM_TAB_KEY = (
 )
 
 
+def _adv_headers(ctx: dict, action_code: str, action_type: str) -> dict:
+    """Build Adv-* request headers and increment request_id in ctx."""
+    ctx["request_id"] += 1
+    return {
+        "Accept":              "application/json, text/plain, */*",
+        "Content-Type":        "application/json;charset=UTF-8",
+        "Adv-Action-Code":     action_code,
+        "Adv-Action-Type":     action_type,
+        "Adv-Conversation-Id": ctx["conversation_id"],
+        "Adv-Page-Id":         ctx["page_id"],
+        "Adv-Request-Id":      str(ctx["request_id"]),
+        "Adv-Session-Id":      ctx["session_id"],
+        "Adv-Window-Id":       ctx["window_id"],
+    }
+
+
+def _update_ctx(ctx: dict, response_body: dict) -> None:
+    """Update session tokens in ctx from an API response (mutates ctx)."""
+    si = response_body.get("session_info", {})
+    if si.get("session_id"):
+        ctx["session_id"] = si["session_id"]
+        ctx["page_id"]    = si["page_id"]
+        ctx["csrf_token"] = si["csrf_token"]
+    if response_body.get("checksum"):
+        ctx["checksum"]  = response_body["checksum"]
+    if response_body.get("viewState"):
+        ctx["viewState"] = response_body["viewState"]
+
+
+def make_session():
+    """
+    Launch Chrome via patchright to bypass DataDome, intercept an Advantage4
+    response to capture session tokens, return (requests.Session, ctx).
+
+    ctx keys: session_id, page_id, csrf_token, window_id, conversation_id, request_id
+    """
+    try:
+        from patchright.sync_api import sync_playwright
+    except ImportError:
+        sys.exit(
+            "ERROR: patchright required.\n"
+            "Install: pip install patchright && patchright install chromium"
+        )
+
+    captured = {}
+
+    with sync_playwright() as p:
+        context = p.chromium.launch_persistent_context(
+            user_data_dir=str(USER_DATA_DIR),
+            headless=False,
+            channel="chrome",
+        )
+        page = context.new_page()
+
+        def on_response(response):
+            if BASE_URL in response.url and not captured:
+                try:
+                    body = response.json()
+                    si = body.get("session_info", {})
+                    if si.get("session_id"):
+                        captured.update(si)
+                except Exception:
+                    pass
+
+        page.on("response", on_response)
+
+        # Warm up profile so DataDome sees Google cookies
+        for warmup in ["https://www.google.com", "https://www.bing.com"]:
+            try:
+                page.goto(warmup, wait_until="domcontentloaded", timeout=15_000)
+                time.sleep(2)
+            except Exception:
+                pass
+
+        # Navigate to portal — DataDome check runs here
+        page.goto(PORTAL_URL, wait_until="networkidle", timeout=60_000)
+        time.sleep(2)
+
+        # Click into Solicitations to trigger an Advantage4 API call
+        try:
+            page.click("text=Solicitations", timeout=10_000)
+            page.wait_for_load_state("networkidle", timeout=30_000)
+        except Exception:
+            pass
+
+        # Wait up to 30 s for session tokens to be captured
+        deadline = time.time() + 30
+        while not captured and time.time() < deadline:
+            time.sleep(0.5)
+
+        if not captured:
+            context.close()
+            sys.exit(
+                "ERROR: Could not capture IRIS VSS session tokens.\n"
+                "The portal may have blocked the session. Try again."
+            )
+
+        cookies = context.cookies()
+        context.close()
+
+    session = requests.Session()
+    session.headers.update({"User-Agent": UA})
+    for c in cookies:
+        session.cookies.set(c["name"], c["value"], domain=c["domain"])
+
+    ctx = {
+        "session_id":      captured["session_id"],
+        "page_id":         captured["page_id"],
+        "csrf_token":      captured["csrf_token"],
+        "window_id":       str(uuid.uuid4()),
+        "conversation_id": str(random.randint(10**18, 10**19 - 1)),
+        "request_id":      0,
+        "checksum":        {},
+        "viewState":       {},
+    }
+    return session, ctx
+
+
+def _raw_search(session: requests.Session, ctx: dict) -> list:
+    """
+    POST search action for open solicitations.
+    Mutates ctx with updated session_info, checksum, viewState.
+    Returns raw T1SO_SRCH_QRY row_data list (unprocessed dicts).
+    """
+    payload = {
+        "action": {
+            "key":                  "vss.page.VVSSX10019.gridView1.group1.cardSearch.searchActions.search",
+            "actionCode":           "search",
+            "actionType":           "searchAction",
+            "applicationAction":    "search",
+            "backgroundAction":     "userInitiated",
+            "bypassPopupClose":     False,
+            "customActionName":     None,
+            "dataSource":           "T1SO_SRCH_QRY",
+            "dsNameList":           "T1SO_SRCH_QRY",
+            "hideActionButton":     False,
+            "hotkey":               "SHIFT+E",
+            "isCarouselNavigation": True,
+            "isEntpriseSrchCreateAction": False,
+            "isShiftKey":           False,
+            "name":                 "search",
+            "shouldIgnoreSysFeedback": False,
+            "targetLocation":       "noDisplay",
+            "viewName":             "gridView1",
+        },
+        "checksum": {
+            "VIEW":    {"gridView1": _SEARCH_VIEW_CHECKSUM},
+            "DS_DATA": {"T1SO_SRCH_QRY": "-1"},
+        },
+        "data": {
+            "ds_query_data": {"T1SO_SRCH_QRY": {"SHOW_TXT": "3"}},
+            "page_data": {},
+        },
+        "session_info": {
+            "session_id": ctx["session_id"],
+            "page_id":    ctx["page_id"],
+            "csrf_token": ctx["csrf_token"],
+        },
+        "viewState": _SEARCH_VIEWSTATE,
+    }
+    headers = _adv_headers(ctx, "search", "searchAction")
+    resp = session.post(BASE_URL, json=payload, headers=headers, timeout=30)
+    resp.raise_for_status()
+    body = resp.json()
+    _update_ctx(ctx, body)
+    ds = body["data"]["ds_data"]["T1SO_SRCH_QRY"]
+    if ds.get("rows_total", 0) > ds.get("rows_per_page", 20):
+        print(
+            f"WARNING: {ds['rows_total']} open solicitations, "
+            f"only {ds['rows_per_page']} returned. Pagination not implemented."
+        )
+    return ds.get("row_data", [])
+
+
+def discover_solicitations(session: requests.Session, ctx: dict) -> list:
+    """Returns list of dicts with LIST_FIELDS keys. Mutates ctx."""
+    raw_rows = _raw_search(session, ctx)
+    return [parse_list_row(r) for r in raw_rows]
+
+
+def extract_commodity_lines(response: dict) -> dict:
+    """Extract commodity line fields. Field names verified in Task 8 probe."""
+    rows = (
+        response.get("data", {})
+        .get("ds_data", {})
+        .get("T3SO_DOC_COMMLN", {})
+        .get("row_data", [])
+    )
+    descriptions, codes, specs = [], [], []
+    for row in rows:
+        # Field names confirmed from probe output in Task 8.
+        # Update ITEM_DSCR/COMM_CD/ITEM_SPEC_DSCR if actual names differ.
+        descriptions.append(row.get("ITEM_DSCR", ""))
+        codes.append(row.get("COMM_CD", ""))
+        specs.append(row.get("ITEM_SPEC_DSCR", ""))
+    return {
+        "commodity_descriptions": "|".join(d for d in descriptions if d),
+        "commodity_codes":        "|".join(c for c in codes if c),
+        "commodity_specs":        "|".join(s for s in specs if s),
+    }
+
+
+def fetch_detail(session: requests.Session, search_ctx: dict, raw_row: dict) -> dict:
+    """
+    Fetch detail fields for one solicitation via 3 sequential API calls:
+      1. docTransition  — navigate to solicitation document
+      2. tabChange      — Solicitation Instructions (ADDL_INFO)
+      3. tabChange      — Commodity Lines (commodity fields)
+
+    raw_row is the original row dict from T1SO_SRCH_QRY.row_data (not parse_list_row output).
+    search_ctx is used read-only; a local copy manages token rotation within this call.
+    Returns dict with keys: additional_instructions, commodity_descriptions, commodity_codes, commodity_specs.
+    """
+    ctx = dict(search_ctx)  # local copy — don't mutate caller's context
+    ctx["request_id"] = 0   # fresh counter for this detail chain
+
+    doc_ref_raw = raw_row.get("DOC_REF", "")
+    column_value = parse_column_value(doc_ref_raw)
+
+    # ── 1. docTransition ──────────────────────────────────────────────────────
+    dt_payload = {
+        "action": {
+            "key": "vss.page.VVSSX10019.gridView1.group1.cardGrid.grid1.solNumTypCat.DOC_REF.DOC_REF_Detail",
+            "actionType":           "transitionAction",
+            "actionCode":           "docTransition",
+            "columnValue":          column_value,
+            "layoutName":           "stdNoNav_Hdr3_Main101",
+            "dsNameList":           "T1SO_SRCH_QRY",
+            "isCarouselNavigation": True,
+        },
+        "checksum": {
+            "VIEW":       search_ctx.get("checksum", {}).get("VIEW", {}),
+            "DS_DATA":    {"T1SO_SRCH_QRY": "-1"},
+            "DATASOURCE": search_ctx.get("checksum", {}).get("DATASOURCE", {}),
+        },
+        "viewState": search_ctx.get("viewState", {}),
+        "data": {
+            "ds_data": {
+                "T1SO_SRCH_QRY": {
+                    "row_data": [{**raw_row, "ADV_ROW_SEL": True}],
+                    "current_row_id": raw_row.get("ADV_ROW_ID", ""),
+                }
+            },
+            "page_data": {},
+        },
+        "session_info": {
+            "session_id": search_ctx["session_id"],
+            "page_id":    search_ctx["page_id"],
+            "csrf_token": search_ctx["csrf_token"],
+        },
+    }
+    time.sleep(DELAY_SECONDS)
+    dt_headers = _adv_headers(ctx, "docTransition", "transitionAction")
+    dt_resp = session.post(BASE_URL, json=dt_payload, headers=dt_headers, timeout=30)
+    dt_resp.raise_for_status()
+    dt_body = dt_resp.json()
+    _update_ctx(ctx, dt_body)
+
+    # ── 2. tabChange → Solicitation Instructions ───────────────────────────────
+    inst_payload = {
+        "action": {
+            "key":                  _INST_TAB_KEY,
+            "actionCode":           "tabChange",
+            "actionType":           "dsAction",
+            "tabName":              "navSolicitation",
+            "viewName":             "solicitationInstView",
+            "isCarouselNavigation": False,
+            "targetLocation":       "display",
+        },
+        "checksum":    ctx.get("checksum", {}),
+        "viewState":   ctx.get("viewState", {}),
+        "data":        {"page_data": {}, "ds_data": {}},
+        "session_info": {
+            "session_id": ctx["session_id"],
+            "page_id":    ctx["page_id"],
+            "csrf_token": ctx["csrf_token"],
+        },
+    }
+    time.sleep(DELAY_SECONDS)
+    inst_headers = _adv_headers(ctx, "tabChange", "dsAction")
+    inst_resp = session.post(BASE_URL, json=inst_payload, headers=inst_headers, timeout=30)
+    inst_resp.raise_for_status()
+    inst_body = inst_resp.json()
+    _update_ctx(ctx, inst_body)
+    instructions = extract_instructions(inst_body)
+
+    # ── 3. tabChange → Commodity Lines ────────────────────────────────────────
+    comm_payload = {
+        "action": {
+            "key":                  _COMM_TAB_KEY,
+            "actionCode":           "tabChange",
+            "actionType":           "dsAction",
+            "tabName":              "navCommodity",
+            "viewName":             "commoditiesView",
+            "isCarouselNavigation": False,
+            "targetLocation":       "display",
+        },
+        "checksum":    ctx.get("checksum", {}),
+        "viewState":   ctx.get("viewState", {}),
+        "data":        {"page_data": {}, "ds_data": {}},
+        "session_info": {
+            "session_id": ctx["session_id"],
+            "page_id":    ctx["page_id"],
+            "csrf_token": ctx["csrf_token"],
+        },
+    }
+    time.sleep(DELAY_SECONDS)
+    comm_headers = _adv_headers(ctx, "tabChange", "dsAction")
+    comm_resp = session.post(BASE_URL, json=comm_payload, headers=comm_headers, timeout=30)
+    comm_resp.raise_for_status()
+    comm_body = comm_resp.json()
+
+    # Print raw commodity response so we can verify field names (removed after Task 9)
+    print("\n=== RAW COMMODITY RESPONSE (verify field names for Task 9) ===")
+    import json as _json
+    comm_rows = (
+        comm_body.get("data", {})
+        .get("ds_data", {})
+        .get("T3SO_DOC_COMMLN", {})
+        .get("row_data", [])
+    )
+    print(_json.dumps(comm_rows[:2], indent=2))
+    print("=== END RAW COMMODITY RESPONSE ===\n")
+
+    commodity = extract_commodity_lines(comm_body)
+    return {**instructions, **commodity}
+
+
 def load_done_ids(output_path: str) -> set:
     if not Path(output_path).exists():
         return set()
