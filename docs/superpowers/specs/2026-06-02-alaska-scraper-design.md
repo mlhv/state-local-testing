@@ -27,9 +27,12 @@ Two phases per run:
 
 **Phase 2 — Data collection:**
 - `discover_solicitations()`: POST `actionCode: "search"` with `SHOW_TXT: "3"` (Open filter). Paginate using `rows_total` / `rows_per_page`. Returns list of row dicts.
-- `fetch_detail()`: POST `actionCode: "docTransition"` keyed on `ADV_ROW_ID`. Returns additional instructions and commodity line data.
+- `fetch_detail()`: Three sequential POSTs per solicitation:
+  1. `docTransition` — navigate to the solicitation document; response returns new `session_info` (session_id, page_id, csrf_token) that must be used for all subsequent calls.
+  2. `tabChange` (`tabName: "navSolicitation"`, `viewName: "solicitationInstView"`) — loads Solicitation Instructions tab; `ADDL_INFO` is at `data.ds_data.T1SO_DOC_HDR.row_data[0].ADDL_INFO`.
+  3. `tabChange` (Commodity Lines tab) — loads `T3SO_DOC_COMMLN` with commodity line data.
 
-All API calls POST JSON to `https://iris-vss.alaska.gov/PRDVSS1X1/Advantage4` with `Adv-*` request headers derived from the session.
+All API calls POST JSON to `https://iris-vss.alaska.gov/PRDVSS1X1/Advantage4` with `Adv-*` request headers derived from the current session state. Session tokens rotate after each call — always use tokens from the latest response.
 
 ---
 
@@ -82,7 +85,26 @@ Adv-Action-Type: <per-call>
 **List response — solicitation rows** at `data.ds_data.T1SO_SRCH_QRY.row_data[]`.
 Pagination fields: `rows_total`, `rows_per_page`, `end_data_window`.
 
-**Detail payload:** `actionCode: "docTransition"`, keyed on `ADV_ROW_ID`. Exact payload structure to be captured during `probe` development.
+**Detail flow (3 calls per solicitation):**
+
+1. `docTransition` — `actionCode: "docTransition"`, `actionType: "transitionAction"`, keyed on `ADV_ROW_ID`. Exact payload structure to be captured during `probe` development. Response returns new `session_info`.
+
+2. Tab change to Solicitation Instructions:
+```json
+{
+  "action": {
+    "actionCode": "tabChange",
+    "actionType": "dsAction",
+    "tabName": "navSolicitation",
+    "viewName": "solicitationInstView",
+    "key": "vss.page.VSSSolicitationDocument.SolicitationDocumentView.wizardNavLinks.navSolicitation"
+  },
+  "session_info": { "<tokens from docTransition response>" }
+}
+```
+Response: `ADDL_INFO` at `data.ds_data.T1SO_DOC_HDR.row_data[0].ADDL_INFO`.
+
+3. Tab change to Commodity Lines — `tabName`/`viewName` TBD (to be captured during probe). Response: commodity rows at `data.ds_data.T3SO_DOC_COMMLN.row_data[]` (fields: `COMM_DSCR`, `COMM_CD`, commodity specs — exact field names TBD).
 
 ---
 
@@ -111,10 +133,10 @@ File: `ak/solicitations_enriched.csv` — one row per solicitation.
 
 | Column | Source | Notes |
 |---|---|---|
-| `additional_instructions` | Solicitation Instructions tab | Free-text description |
-| `commodity_descriptions` | Commodity Lines tab | Pipe-delimited if multiple lines |
-| `commodity_codes` | Commodity Lines tab | Pipe-delimited |
-| `commodity_specs` | Commodity Lines tab | Pipe-delimited specifications |
+| `additional_instructions` | `T1SO_DOC_HDR.row_data[0].ADDL_INFO` | Free-text description; from `navSolicitation` tab-change response |
+| `commodity_descriptions` | `T3SO_DOC_COMMLN` rows | Pipe-delimited if multiple lines |
+| `commodity_codes` | `T3SO_DOC_COMMLN` rows | Pipe-delimited |
+| `commodity_specs` | `T3SO_DOC_COMMLN` rows | Pipe-delimited specifications |
 | `alaska_url` | Constructed | Detail page URL |
 | `scrape_status` | Scraper | `success` or `error` |
 
@@ -139,7 +161,7 @@ ak/
 
 - `make_session()` → `(requests.Session, session_info: dict)` — patchright warmup, DataDome bypass, token extraction.
 - `discover_solicitations(session, session_info)` → `list[dict]` — paginates list API, applies Open filter, returns parsed rows.
-- `fetch_detail(session, session_info, adv_row_id, request_id)` → `dict` — docTransition POST, returns detail fields.
+- `fetch_detail(session, session_info, adv_row_id, request_id)` → `dict` — three sequential POSTs: docTransition → tabChange(Solicitation Instructions) → tabChange(Commodity Lines). Session tokens from each response used in the next call. Returns merged detail fields.
 - `parse_doc_ref(raw: str)` → `str` — extracts `RFQ-09-260000015-2` from `[...][RFQ-09-260000015-2]`.
 - `ms_to_iso(ms: int | str)` → `str` — converts ms epoch to ISO 8601 string; returns `""` on empty.
 - `load_done_ids(output_path)` → `set[str]` — reads existing CSV, returns `doc_ref` values with `scrape_status = success`.
@@ -184,7 +206,8 @@ python scraper.py run     # session → all new/errored → write solicitations_
 
 ## Known Unknowns
 
-- **Detail page POST payload**: exact `docTransition` JSON body structure is not yet captured. Will be discovered by inspecting the Network tab when clicking a solicitation row during probe development.
+- **`docTransition` POST payload**: exact JSON body structure for navigating to a solicitation detail is not yet captured. Will be discovered by inspecting the Network tab when clicking a solicitation row during probe development.
+- **Commodity Lines tab payload**: `tabName`/`viewName` and commodity field names (`T3SO_DOC_COMMLN` row fields) are not yet captured. To be discovered during probe development.
 - **Checksum/viewState fields**: the list POST payload includes `checksum` and `viewState` blobs that may need to be replayed exactly. Values will be captured from the initial page load response.
 - **Session token location**: `Adv-Session-Id`, `page_id`, `csrf_token` are embedded somewhere in the initial page HTML or a bootstrap API call — exact extraction method TBD during probe development.
 
