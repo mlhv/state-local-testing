@@ -1,6 +1,6 @@
 # State Procurement Scraper — Master Handoff
 
-**Last updated:** 2026-05-27
+**Last updated:** 2026-06-03
 
 ## Project Goal
 
@@ -17,6 +17,7 @@ Aggregate state government procurement opportunities into a common dataset feedi
 | Massachusetts | ✅ Complete | `ma/` | COMMBUYS | Manual CSV export | `solicitations_enriched.csv` (31 cols) |
 | Alabama | ✅ Complete | `al/` | Alabama BUYS (Ivalua) | No export — list scraped directly | `solicitations_enriched.csv` (15 cols) |
 | Alaska | ✅ Complete | `ak/` | IRIS VSS (CGI Advantage 4) | No export — list scraped directly | `solicitations_enriched.csv` (18 cols) |
+| Arizona | ✅ Complete | `az/` | Arizona Procurement Portal (Ivalua) | No export — list scraped directly | `solicitations_enriched.csv` (21 cols) |
 
 ---
 
@@ -147,6 +148,37 @@ python scraper.py run
 **Output columns (18):** `doc_ref`, `doc_type`, `description`, `department`, `buyer_name`, `buyer_email`, `buyer_phone`, `closing_dt`, `publish_dt`, `amended_dt`, `status`, `category_code`, `additional_instructions`, `commodity_descriptions`, `commodity_codes`, `commodity_specs`, `alaska_url`, `scrape_status`
 
 **Known gaps:** DB normalization; commodity data may be sparse if solicitations don't populate line items
+
+**Install note:** `pip install patchright && patchright install chromium` required on first setup.
+
+---
+
+## Arizona (Arizona Procurement Portal)
+
+**Portal:** https://app.az.gov/page.aspx/en/rfp/request_browse_public
+
+**How it works:** Same Ivalua SaaS platform as Alabama. List grid is populated via AJAX POST to `ajax.aspx` — same endpoint structure, same pagination mechanism. `hdnUserValue: ,body_x_selStatusCode_1` in the payload applies the "Open for Bidding" filter server-side (unlike Alabama where filtering is client-side). Detail pages use Ivalua's `data-iv-role="field"/"control"` structure parsed with BeautifulSoup. reCAPTCHA v2 is present but auto-passes with patchright — no manual interaction needed. `make_session()` waits for `#body_x_grid_upgrid` to confirm the page loaded.
+
+**Run:**
+```bash
+cd az
+source ../venv/bin/activate
+# patchright install chromium  (first time only)
+# Chrome must be closed when running (profile lock)
+python scraper.py probe
+python scraper.py run
+```
+
+**Key technical notes:**
+- Same Ivalua AJAX pattern as Alabama — `ajax.aspx?ivControlUIDsAsync=body:x:grid:upgrid&asyncmodulename=rfp&asyncpagename=request_browse_public`
+- reCAPTCHA v2 auto-passes with patchright (fingerprint patches score it as human); no `input()` pause needed
+- Persistent profile at `~/.az_scraper_profile`; warmup visits google.com + bing.com before portal
+- Server-side status filter via `hdnUserValue: ,body_x_selStatusCode_1` — no client-side filtering needed (safety net still applied)
+- No manual export step — open solicitations discovered directly
+
+**Output columns (21):** `src_code`, `solicitation_label`, `commodity`, `buying_agency`, `status`, `rfx_awarded`, `begin_date`, `end_date`, `detail_href`, `lot_number`, `round_number`, `fiscal_year`, `rfx_type`, `procurement_officer`, `procurement_officer_email`, `procurement_officer_phone`, `discussion_forum_cutoff`, `commodity_full`, `summary`, `arizona_url`, `scrape_status`
+
+**Known gaps:** DB normalization
 
 **Install note:** `pip install patchright && patchright install chromium` required on first setup.
 
