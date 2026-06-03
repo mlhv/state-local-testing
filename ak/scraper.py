@@ -53,7 +53,7 @@ _INST_TAB_KEY = (
 )
 _COMM_TAB_KEY = (
     "vss.page.VSSSolicitationDocument"
-    ".SolicitationDocumentView.wizardNavLinks.navCommodity"
+    ".SolicitationDocumentView.wizardNavLinks.navComm"
 )
 
 
@@ -273,7 +273,7 @@ def discover_solicitations(session: requests.Session, ctx: dict) -> list:
 
 
 def extract_commodity_lines(response: dict) -> dict:
-    """Extract commodity line fields. Field names verified in Task 8 probe."""
+    """Extract commodity line fields from T3SO_DOC_COMMLN row_data."""
     rows = (
         response.get("data", {})
         .get("ds_data", {})
@@ -282,11 +282,9 @@ def extract_commodity_lines(response: dict) -> dict:
     )
     descriptions, codes, specs = [], [], []
     for row in rows:
-        # Field names confirmed from probe output in Task 8.
-        # Update ITEM_DSCR/COMM_CD/ITEM_SPEC_DSCR if actual names differ.
-        descriptions.append(row.get("ITEM_DSCR", ""))
+        descriptions.append(row.get("EXT_DSCR", ""))
         codes.append(row.get("COMM_CD", ""))
-        specs.append(row.get("ITEM_SPEC_DSCR", ""))
+        specs.append(row.get("COMM_SPECS", ""))
     return {
         "commodity_descriptions": "|".join(d for d in descriptions if d),
         "commodity_codes":        "|".join(c for c in codes if c),
@@ -384,7 +382,7 @@ def fetch_detail(session: requests.Session, search_ctx: dict, raw_row: dict) -> 
             "key":                  _COMM_TAB_KEY,
             "actionCode":           "tabChange",
             "actionType":           "dsAction",
-            "tabName":              "navCommodity",
+            "tabName":              "navComm",
             "viewName":             "commoditiesView",
             "isCarouselNavigation": False,
             "targetLocation":       "display",
@@ -403,19 +401,6 @@ def fetch_detail(session: requests.Session, search_ctx: dict, raw_row: dict) -> 
     comm_resp = session.post(BASE_URL, json=comm_payload, headers=comm_headers, timeout=30)
     comm_resp.raise_for_status()
     comm_body = comm_resp.json()
-
-    # Print raw commodity response so we can verify field names (removed after Task 9)
-    print("\n=== RAW COMMODITY RESPONSE (verify field names for Task 9) ===")
-    import json as _json
-    comm_rows = (
-        comm_body.get("data", {})
-        .get("ds_data", {})
-        .get("T3SO_DOC_COMMLN", {})
-        .get("row_data", [])
-    )
-    print(_json.dumps(comm_rows[:2], indent=2))
-    print("=== END RAW COMMODITY RESPONSE ===\n")
-
     commodity = extract_commodity_lines(comm_body)
     return {**instructions, **commodity}
 

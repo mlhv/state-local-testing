@@ -1,0 +1,33 @@
+{
+  "data": {
+    "ds_data": {
+      "T3SO_DOC_COMMLN": {
+        "name": "T3SO_DOC_COMMLN",
+        "rows_sent": 2,
+        "rows_total": 2,
+        "row_data": [
+          {
+            "ADV_ROW_ID": "abc001",
+            "ADV_ROW_KEY": "1",
+            "DOC_COMMLN_LN_NO": "1",
+            "EXT_DSCR": "400Hz Dual Output Ground Power Unit",
+            "COMM_CD": "43211507",
+            "COMM_SPECS": "Dual output solid-state, 90kVA per output, 400Hz frequency",
+            "QTY": "1",
+            "UNIT_MEAS_CD": "EA"
+          },
+          {
+            "ADV_ROW_ID": "abc002",
+            "ADV_ROW_KEY": "2",
+            "DOC_COMMLN_LN_NO": "2",
+            "EXT_DSCR": "Installation and Commissioning",
+            "COMM_CD": "72150000",
+            "COMM_SPECS": "",
+            "QTY": "1",
+            "UNIT_MEAS_CD": "EA"
+          }
+        ]
+      }
+    }
+  }
+}

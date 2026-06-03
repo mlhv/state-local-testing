@@ -104,6 +104,44 @@ class TestParseListRow:
         assert row["category_code"] == "145"
 
 
+class TestExtractCommodityLines:
+    def setup_method(self):
+        with open(FIXTURES / "sample_commodity_response.json") as f:
+            self.resp = json.load(f)
+
+    def test_extracts_ext_dscr_as_descriptions(self):
+        result = scraper.extract_commodity_lines(self.resp)
+        assert result["commodity_descriptions"] == (
+            "400Hz Dual Output Ground Power Unit|Installation and Commissioning"
+        )
+
+    def test_extracts_comm_cd_as_codes(self):
+        result = scraper.extract_commodity_lines(self.resp)
+        assert result["commodity_codes"] == "43211507|72150000"
+
+    def test_extracts_comm_specs(self):
+        result = scraper.extract_commodity_lines(self.resp)
+        assert "90kVA per output" in result["commodity_specs"]
+
+    def test_empty_specs_not_included_in_pipe_join(self):
+        result = scraper.extract_commodity_lines(self.resp)
+        # Second row has empty COMM_SPECS — should not produce trailing pipe
+        assert not result["commodity_specs"].endswith("|")
+
+    def test_empty_when_no_rows(self):
+        resp = {"data": {"ds_data": {"T3SO_DOC_COMMLN": {"row_data": []}}}}
+        result = scraper.extract_commodity_lines(resp)
+        assert result == {
+            "commodity_descriptions": "",
+            "commodity_codes": "",
+            "commodity_specs": "",
+        }
+
+    def test_empty_when_key_missing(self):
+        result = scraper.extract_commodity_lines({})
+        assert result["commodity_descriptions"] == ""
+
+
 class TestExtractInstructions:
     def setup_method(self):
         with open(FIXTURES / "sample_inst_response.json") as f:
