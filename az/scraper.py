@@ -193,3 +193,208 @@ def extract_fields(html):
         "commodity_full":            _label_value(soup, "Commodity"),
         "summary":                   _label_value(soup, "Summary"),
     }
+
+
+_BASE_PAYLOAD = {
+    "__EVENTTARGET": "body_x_grid_grd",
+    "__LASTFOCUS": "",
+    "REQUEST_METHOD": "POST",
+    # Server-side "Open for Bidding" filter — keeps closed/awarded records off the list.
+    "hdnUserValue": ",body_x_selStatusCode_1",
+    "x_headaction": "",
+    "x_headloginName": "",
+    "hdnMandatory": "0",
+    "hdnWflAction": "",
+    "body:_ctl0": "",
+    "body:x:txtQuery": "",
+    "body:x:selFamily": "",
+    "body_x_selFamily_text": "",
+    "header:x:prxHeaderLogInfo:x:ContrastModal:chkContrastTheme_radio": "true",
+    "header:x:prxHeaderLogInfo:x:ContrastModal:chkContrastTheme": "True",
+    "header:x:prxHeaderLogInfo:x:ContrastModal:chkPassiveNotification": "0",
+    "proxyActionBar:x:txtWflRefuseMessage": "",
+}
+
+
+def _pagination_payload(page_n):
+    payload = dict(_BASE_PAYLOAD)
+    payload["__EVENTARGUMENT"] = f"Page|{page_n}"
+    payload["__LASTFOCUS"] = f"body_x_grid_gridPagerBtn{page_n}Page"
+    return payload
+
+
+def make_session():
+    """
+    Return a requests.Session pre-loaded with cookies that bypass Arizona's
+    reCAPTCHA v2 browser check.
+
+    reCAPTCHA v2 requires a human to click the "I'm not a robot" checkbox —
+    it cannot be auto-submitted. Strategy:
+      1. Launch real Chrome (non-headless) via patchright with persistent profile.
+      2. Warm up by visiting google.com and bing.com to deposit Google-domain cookies.
+      3. Navigate to the portal list page and wait for user to solve the CAPTCHA.
+      4. User presses Enter; extract cookies into a requests.Session.
+    """
+    try:
+        from patchright.sync_api import sync_playwright
+    except ImportError:
+        sys.exit(
+            "ERROR: patchright is required to pass the Arizona browser check.\n"
+            "Install: pip install patchright && patchright install chromium"
+        )
+
+    with sync_playwright() as p:
+        context = p.chromium.launch_persistent_context(
+            user_data_dir=str(USER_DATA_DIR),
+            headless=False,
+            channel="chrome",
+        )
+        page = context.new_page()
+
+        for warmup_url in ["https://www.google.com", "https://www.bing.com"]:
+            try:
+                page.goto(warmup_url, wait_until="domcontentloaded", timeout=15_000)
+                time.sleep(2)
+            except Exception:
+                pass
+
+        page.goto(BROWSE_URL, wait_until="domcontentloaded", timeout=30_000)
+        input("Please solve the CAPTCHA in the browser window, then press Enter to continue...")
+
+        cookies = context.cookies()
+        context.close()
+
+    session = requests.Session()
+    session.headers.update({"User-Agent": UA})
+    for c in cookies:
+        session.cookies.set(c["name"], c["value"], domain=c["domain"])
+    return session
+
+
+def discover_solicitations(session=None):
+    """
+    Paginate all pages of the open solicitations list via AJAX POST.
+
+    The hdnUserValue payload key applies the "Open for Bidding" filter server-side,
+    so no client-side filtering is needed after this call.
+
+    Pass an existing session to reuse cookies (avoids a second CAPTCHA prompt).
+    """
+    if session is None:
+        session = make_session()
+
+    all_rows = []
+    page_n = 1
+    total_pages = 1
+
+    while page_n <= total_pages:
+        time.sleep(DELAY_SECONDS)
+        resp = session.post(AJAX_URL, data=_pagination_payload(page_n), timeout=30)
+        resp.raise_for_status()
+        rows, total_pages = parse_list_page(resp.text)
+        all_rows.extend(rows)
+        page_n += 1
+
+    return all_rows
+
+
+def probe():
+    session = make_session()
+    print("Discovering solicitations (paginating list)...")
+    open_rows = discover_solicitations(session)
+    done_ids = load_done_ids(OUTPUT_PATH)
+
+    new_rows = [r for r in open_rows if r["src_code"] not in done_ids]
+    if not new_rows:
+        print("No new open solicitations to probe.")
+        return
+
+    row = new_rows[0]
+    url = BASE_URL + row["detail_href"]
+    print(f"Probing: {url}\n")
+
+    try:
+        resp = session.get(url, timeout=30)
+        resp.raise_for_status()
+        fields = extract_fields(resp.text)
+    except Exception as e:
+        sys.exit(f"ERROR fetching {url}: {e}")
+
+    print("=== List Fields ===")
+    print(f"Code:               {row['src_code']}")
+    print(f"Label:              {row['solicitation_label']}")
+    print(f"Commodity:          {row['commodity']}")
+    print(f"Buying Agency:      {row['buying_agency']}")
+    print(f"Status:             {row['status']}")
+    print(f"RFx Awarded:        {row['rfx_awarded']}")
+    print(f"Begin:              {row['begin_date']}")
+    print(f"End:                {row['end_date']}")
+    print(f"\n=== Detail Fields ===")
+    print(f"Lot #:              {fields['lot_number']}")
+    print(f"Round #:            {fields['round_number']}")
+    print(f"Fiscal Year:        {fields['fiscal_year']}")
+    print(f"RFx Type:           {fields['rfx_type']}")
+    print(f"Procurement Officer:{fields['procurement_officer']}")
+    print(f"Email:              {fields['procurement_officer_email']}")
+    print(f"Phone:              {fields['procurement_officer_phone']}")
+    print(f"Forum Cut Off:      {fields['discussion_forum_cutoff']}")
+    print(f"Commodity (full):   {fields['commodity_full']}")
+    print(f"\n=== Summary ===")
+    summary = fields["summary"]
+    print(summary[:500] + ("..." if len(summary) > 500 else ""))
+
+
+def run():
+    session = make_session()
+    print("Discovering solicitations (paginating list)...")
+    open_rows = discover_solicitations(session)
+    done_ids = load_done_ids(OUTPUT_PATH)
+
+    to_scrape = [r for r in open_rows if r["src_code"] not in done_ids]
+    total_new = len(to_scrape)
+    print(f"Open: {len(open_rows)}. Already done: {len(done_ids)}. To scrape: {total_new}")
+
+    if total_new == 0:
+        print("Nothing to do.")
+        return
+
+    enriched = []
+    if Path(OUTPUT_PATH).exists():
+        all_rows = pd.read_csv(OUTPUT_PATH, dtype=str).to_dict("records")
+        enriched = [r for r in all_rows if r.get("scrape_status") == "success"]
+    success_count = 0
+    error_count = 0
+
+    for i, row in enumerate(to_scrape, 1):
+        url = BASE_URL + row["detail_href"]
+        print(f"[{i}/{total_new}] {url}")
+
+        try:
+            resp = session.get(url, timeout=30)
+            resp.raise_for_status()
+            scraped = extract_fields(resp.text)
+            scraped["arizona_url"] = url
+            scraped["scrape_status"] = "success"
+            success_count += 1
+        except Exception as e:
+            print(f"  ERROR: {e}")
+            scraped = EMPTY_SCRAPED.copy()
+            scraped["arizona_url"] = url
+            scraped["scrape_status"] = "error"
+            error_count += 1
+
+        enriched.append({**row, **scraped})
+        pd.DataFrame(enriched).to_csv(OUTPUT_PATH, index=False)
+        time.sleep(DELAY_SECONDS)
+
+    print(f"\nDone. {success_count} succeeded, {error_count} errored. Output: {OUTPUT_PATH}")
+
+
+if __name__ == "__main__":
+    cmd = sys.argv[1] if len(sys.argv) > 1 else "probe"
+    if cmd == "probe":
+        probe()
+    elif cmd == "run":
+        run()
+    else:
+        print(__doc__)
