@@ -228,12 +228,13 @@ def make_session():
     Return a requests.Session pre-loaded with cookies that bypass Arizona's
     reCAPTCHA v2 browser check.
 
-    reCAPTCHA v2 requires a human to click the "I'm not a robot" checkbox —
-    it cannot be auto-submitted. Strategy:
+    patchright's automation fingerprint patches cause reCAPTCHA v2 to auto-pass
+    without manual interaction. Strategy:
       1. Launch real Chrome (non-headless) via patchright with persistent profile.
       2. Warm up by visiting google.com and bing.com to deposit Google-domain cookies.
-      3. Navigate to the portal list page and wait for user to solve the CAPTCHA.
-      4. User presses Enter; extract cookies into a requests.Session.
+      3. Navigate to the portal list page; wait for the solicitations grid to appear
+         (confirms reCAPTCHA passed and page loaded).
+      4. Extract cookies into a requests.Session.
     """
     try:
         from patchright.sync_api import sync_playwright
@@ -259,7 +260,14 @@ def make_session():
                 pass
 
         page.goto(BROWSE_URL, wait_until="domcontentloaded", timeout=30_000)
-        input("Please solve the CAPTCHA in the browser window, then press Enter to continue...")
+        try:
+            page.wait_for_selector("#body_x_grid_upgrid", timeout=60_000)
+        except Exception:
+            context.close()
+            sys.exit(
+                "ERROR: Arizona portal grid did not load within 60 s.\n"
+                "The reCAPTCHA may have flagged the browser. Try again."
+            )
 
         cookies = context.cookies()
         context.close()
