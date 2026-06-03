@@ -109,11 +109,11 @@ Same Ivalua `data-iv-role="field"/"control"` HTML structure as Alabama — `_lab
 
 ## Output Schema
 
-File: `az/solicitations_enriched.csv` (~19 columns)
+File: `az/solicitations_enriched.csv` (~21 columns)
 
 **List columns (9):** `src_code`, `solicitation_label`, `commodity`, `buying_agency`, `status`, `rfx_awarded`, `begin_date`, `end_date`, `detail_href`
 
-**Scraped columns (10):** `lot_number`, `round_number`, `fiscal_year`, `rfx_type`, `procurement_officer`, `procurement_officer_email`, `procurement_officer_phone`, `discussion_forum_cutoff`, `commodity_full`, `summary`, `arizona_url`, `scrape_status`
+**Scraped columns (12):** `lot_number`, `round_number`, `fiscal_year`, `rfx_type`, `procurement_officer`, `procurement_officer_email`, `procurement_officer_phone`, `discussion_forum_cutoff`, `commodity_full`, `summary`, `arizona_url`, `scrape_status`
 
 ---
 
