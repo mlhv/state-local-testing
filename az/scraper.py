@@ -225,14 +225,16 @@ def _pagination_payload(page_n):
 
 def make_session():
     """
-    Return (session, page1_html) where session is a requests.Session pre-loaded
-    with cookies from Arizona's portal and page1_html is the already-loaded
-    solicitations grid HTML.
+    Return a requests.Session pre-loaded with cookies that bypass Arizona's
+    reCAPTCHA v2 browser check.
 
     patchright's automation fingerprint patches cause reCAPTCHA v2 to auto-pass
-    without manual interaction. We capture page 1 HTML directly from the browser
-    because the initial page load is a standard GET — not an AJAX call — so
-    re-fetching page 1 via the ajax.aspx endpoint hangs.
+    without manual interaction. Strategy:
+      1. Launch real Chrome (non-headless) via patchright with persistent profile.
+      2. Warm up by visiting google.com and bing.com to deposit Google-domain cookies.
+      3. Navigate to the portal list page; wait for the solicitations grid to appear
+         (confirms reCAPTCHA passed and page loaded).
+      4. Extract cookies into a requests.Session.
     """
     try:
         from patchright.sync_api import sync_playwright
@@ -259,62 +261,55 @@ def make_session():
 
         page.goto(BROWSE_URL, wait_until="domcontentloaded", timeout=30_000)
         try:
-            # Wait for an actual data row — the container div appears early but
-            # rows are injected by JavaScript; [data-id] is present on every row tr.
-            page.wait_for_selector("#body_x_grid_upgrid [data-id]", timeout=60_000)
+            page.wait_for_selector("#body_x_grid_upgrid", timeout=60_000)
         except Exception:
             context.close()
             sys.exit(
-                "ERROR: Arizona portal grid rows did not load within 60 s.\n"
+                "ERROR: Arizona portal grid did not load within 60 s.\n"
                 "The reCAPTCHA may have flagged the browser. Try again."
             )
 
         cookies = context.cookies()
-        page1_html = page.content()
         context.close()
 
     session = requests.Session()
     session.headers.update({"User-Agent": UA})
     for c in cookies:
         session.cookies.set(c["name"], c["value"], domain=c["domain"])
-    return session, page1_html
+    return session
 
 
-def discover_solicitations(session=None, page1_html=None):
+def discover_solicitations(session=None):
     """
-    Paginate all pages of the open solicitations list.
+    Paginate all pages of the open solicitations list via AJAX POST.
 
-    Page 1 is taken from page1_html (captured directly from the browser) since
-    the initial page load is a GET, not an AJAX call. Pages 2+ are fetched via
-    AJAX POST using the session cookies.
+    The hdnUserValue payload key applies the "Open for Bidding" filter server-side,
+    but we also apply a client-side filter to guard against edge cases.
 
-    Pass an existing session + page1_html (from make_session) to avoid opening
-    the browser twice.
+    Pass an existing session to reuse cookies (avoids a second CAPTCHA prompt).
     """
     if session is None:
-        session, page1_html = make_session()
+        session = make_session()
 
     all_rows = []
+    page_n = 1
+    total_pages = 1
 
-    # Page 1: use the HTML already loaded in the browser
-    rows, total_pages = parse_list_page(page1_html)
-    all_rows.extend(rows)
-
-    # Pages 2+: AJAX POST
-    for page_n in range(2, total_pages + 1):
+    while page_n <= total_pages:
         time.sleep(DELAY_SECONDS)
         resp = session.post(AJAX_URL, data=_pagination_payload(page_n), timeout=30)
         resp.raise_for_status()
-        rows, _ = parse_list_page(resp.text)
+        rows, total_pages = parse_list_page(resp.text)
         all_rows.extend(rows)
+        page_n += 1
 
     return [r for r in all_rows if r.get("status") == "Open for Bidding"]
 
 
 def probe():
-    session, page1_html = make_session()
+    session = make_session()
     print("Discovering solicitations (paginating list)...")
-    open_rows = discover_solicitations(session, page1_html)
+    open_rows = discover_solicitations(session)
     done_ids = load_done_ids(OUTPUT_PATH)
 
     new_rows = [r for r in open_rows if r["src_code"] not in done_ids]
@@ -358,9 +353,9 @@ def probe():
 
 
 def run():
-    session, page1_html = make_session()
+    session = make_session()
     print("Discovering solicitations (paginating list)...")
-    open_rows = discover_solicitations(session, page1_html)
+    open_rows = discover_solicitations(session)
     done_ids = load_done_ids(OUTPUT_PATH)
 
     to_scrape = [r for r in open_rows if r["src_code"] not in done_ids]
