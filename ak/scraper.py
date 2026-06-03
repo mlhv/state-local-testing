@@ -502,6 +502,57 @@ def probe():
         print(f"  {k}: {val}")
 
 
+def run():
+    session, ctx = make_session()
+    print("Discovering open solicitations...")
+    raw_rows = _raw_search(session, ctx)
+    done_ids = load_done_ids(OUTPUT_PATH)
+
+    to_scrape = [
+        r for r in raw_rows
+        if parse_doc_ref(r.get("DOC_REF", "")) not in done_ids
+    ]
+    total_new = len(to_scrape)
+    print(f"Open: {len(raw_rows)}. Already done: {len(done_ids)}. To scrape: {total_new}")
+
+    if total_new == 0:
+        print("Nothing to do.")
+        return
+
+    enriched = []
+    if Path(OUTPUT_PATH).exists():
+        all_rows = pd.read_csv(OUTPUT_PATH, dtype=str).to_dict("records")
+        enriched = [r for r in all_rows if r.get("scrape_status") == "success"]
+
+    success_count = 0
+    error_count = 0
+
+    for i, raw_row in enumerate(to_scrape, 1):
+        doc_ref = parse_doc_ref(raw_row.get("DOC_REF", ""))
+        list_fields = parse_list_row(raw_row)
+        col_val = parse_column_value(raw_row.get("DOC_REF", ""))
+        alaska_url = f"{BASE_URL}?action=docTransition&columnValue={col_val}"
+
+        print(f"[{i}/{total_new}] {doc_ref}")
+        try:
+            detail = fetch_detail(session, ctx, raw_row)
+            detail["alaska_url"] = alaska_url
+            detail["scrape_status"] = "success"
+            success_count += 1
+        except Exception as e:
+            print(f"  ERROR: {e}")
+            detail = EMPTY_SCRAPED.copy()
+            detail["alaska_url"] = alaska_url
+            detail["scrape_status"] = "error"
+            error_count += 1
+
+        enriched.append({**list_fields, **detail})
+        pd.DataFrame(enriched).to_csv(OUTPUT_PATH, index=False)
+        time.sleep(DELAY_SECONDS)
+
+    print(f"\nDone. {success_count} succeeded, {error_count} errored. Output: {OUTPUT_PATH}")
+
+
 if __name__ == "__main__":
     cmd = sys.argv[1] if len(sys.argv) > 1 else "probe"
     if cmd == "probe":
