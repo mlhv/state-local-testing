@@ -112,16 +112,16 @@ class TestExtractCommodityLines:
     def test_extracts_ext_dscr_as_descriptions(self):
         result = scraper.extract_commodity_lines(self.resp)
         assert result["commodity_descriptions"] == (
-            "400Hz Dual Output Ground Power Unit|Installation and Commissioning"
+            "400Hz Output Solid-State GPU|Installation and Commissioning"
         )
 
     def test_extracts_comm_cd_as_codes(self):
         result = scraper.extract_commodity_lines(self.resp)
-        assert result["commodity_codes"] == "43211507|72150000"
+        assert result["commodity_codes"] == "03523|72150000"
 
     def test_extracts_comm_specs(self):
         result = scraper.extract_commodity_lines(self.resp)
-        assert "90kVA per output" in result["commodity_specs"]
+        assert "Airport Equipment Ground Power" in result["commodity_specs"]
 
     def test_empty_specs_not_included_in_pipe_join(self):
         result = scraper.extract_commodity_lines(self.resp)

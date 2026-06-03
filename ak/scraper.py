@@ -46,14 +46,10 @@ _SEARCH_VIEWSTATE = {
     },
 }
 
-# Tab-change action keys (confirmed from network capture)
+# Tab-change action key for the Solicitation Instructions tab
 _INST_TAB_KEY = (
     "vss.page.VSSSolicitationDocument"
     ".SolicitationDocumentView.wizardNavLinks.navSolicitation"
-)
-_COMM_TAB_KEY = (
-    "vss.page.VSSSolicitationDocument"
-    ".SolicitationDocumentView.wizardNavLinks.navComm"
 )
 
 
@@ -294,10 +290,9 @@ def extract_commodity_lines(response: dict) -> dict:
 
 def fetch_detail(session: requests.Session, search_ctx: dict, raw_row: dict) -> dict:
     """
-    Fetch detail fields for one solicitation via 3 sequential API calls:
-      1. docTransition  — navigate to solicitation document
-      2. tabChange      — Solicitation Instructions (ADDL_INFO)
-      3. tabChange      — Commodity Lines (commodity fields)
+    Fetch detail fields for one solicitation via 2 sequential API calls:
+      1. docTransition  — navigate to solicitation document; response includes T3SO_DOC_COMMLN
+      2. tabChange      — Solicitation Instructions tab (ADDL_INFO)
 
     raw_row is the original row dict from T1SO_SRCH_QRY.row_data (not parse_list_row output).
     search_ctx is used read-only; a local copy manages token rotation within this call.
@@ -309,7 +304,7 @@ def fetch_detail(session: requests.Session, search_ctx: dict, raw_row: dict) -> 
     doc_ref_raw = raw_row.get("DOC_REF", "")
     column_value = parse_column_value(doc_ref_raw)
 
-    # ── 1. docTransition ──────────────────────────────────────────────────────
+    # ── 1. docTransition — response contains T3SO_DOC_COMMLN commodity lines ──
     dt_payload = {
         "action": {
             "key": "vss.page.VVSSX10019.gridView1.group1.cardGrid.grid1.solNumTypCat.DOC_REF.DOC_REF_Detail",
@@ -347,8 +342,9 @@ def fetch_detail(session: requests.Session, search_ctx: dict, raw_row: dict) -> 
     dt_resp.raise_for_status()
     dt_body = dt_resp.json()
     _update_ctx(ctx, dt_body)
+    commodity = extract_commodity_lines(dt_body)
 
-    # ── 2. tabChange → Solicitation Instructions ───────────────────────────────
+    # ── 2. tabChange → Solicitation Instructions (ADDL_INFO) ──────────────────
     inst_payload = {
         "action": {
             "key":                  _INST_TAB_KEY,
@@ -376,32 +372,6 @@ def fetch_detail(session: requests.Session, search_ctx: dict, raw_row: dict) -> 
     _update_ctx(ctx, inst_body)
     instructions = extract_instructions(inst_body)
 
-    # ── 3. tabChange → Commodity Lines ────────────────────────────────────────
-    comm_payload = {
-        "action": {
-            "key":                  _COMM_TAB_KEY,
-            "actionCode":           "tabChange",
-            "actionType":           "dsAction",
-            "tabName":              "navComm",
-            "viewName":             "commoditiesView",
-            "isCarouselNavigation": False,
-            "targetLocation":       "display",
-        },
-        "checksum":    ctx.get("checksum", {}),
-        "viewState":   ctx.get("viewState", {}),
-        "data":        {"page_data": {}, "ds_data": {}},
-        "session_info": {
-            "session_id": ctx["session_id"],
-            "page_id":    ctx["page_id"],
-            "csrf_token": ctx["csrf_token"],
-        },
-    }
-    time.sleep(DELAY_SECONDS)
-    comm_headers = _adv_headers(ctx, "tabChange", "dsAction")
-    comm_resp = session.post(BASE_URL, json=comm_payload, headers=comm_headers, timeout=30)
-    comm_resp.raise_for_status()
-    comm_body = comm_resp.json()
-    commodity = extract_commodity_lines(comm_body)
     return {**instructions, **commodity}
 
 

@@ -3,28 +3,37 @@
     "ds_data": {
       "T3SO_DOC_COMMLN": {
         "name": "T3SO_DOC_COMMLN",
+        "metaname": "SO_DOC_COMMLN",
         "rows_sent": 2,
         "rows_total": 2,
         "row_data": [
           {
-            "ADV_ROW_ID": "abc001",
-            "ADV_ROW_KEY": "1",
+            "ADV_ROW_ID": "vvj8FjT4JHzkoQDm",
+            "ADV_ROW_KEY": "-1140788261",
+            "ADV_ROW_SEL": false,
             "DOC_COMMLN_LN_NO": "1",
-            "EXT_DSCR": "400Hz Dual Output Ground Power Unit",
-            "COMM_CD": "43211507",
-            "COMM_SPECS": "Dual output solid-state, 90kVA per output, 400Hz frequency",
-            "QTY": "1",
-            "UNIT_MEAS_CD": "EA"
+            "EXT_DSCR": "400Hz Output Solid-State GPU",
+            "COMM_SPECS": "Airport Equipment Ground Power for Aircraft at the Gates",
+            "COMM_CD": "03523",
+            "QTY": "1.00000",
+            "UNIT_MEAS_CD": "EA",
+            "DLVR_DT": "",
+            "MANFR_NM": "",
+            "MANFR_PART_NO": ""
           },
           {
             "ADV_ROW_ID": "abc002",
-            "ADV_ROW_KEY": "2",
+            "ADV_ROW_KEY": "-1140788262",
+            "ADV_ROW_SEL": false,
             "DOC_COMMLN_LN_NO": "2",
             "EXT_DSCR": "Installation and Commissioning",
-            "COMM_CD": "72150000",
             "COMM_SPECS": "",
-            "QTY": "1",
-            "UNIT_MEAS_CD": "EA"
+            "COMM_CD": "72150000",
+            "QTY": "1.00000",
+            "UNIT_MEAS_CD": "EA",
+            "DLVR_DT": "",
+            "MANFR_NM": "",
+            "MANFR_PART_NO": ""
           }
         ]
       }
