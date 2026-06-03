@@ -2,6 +2,8 @@ import pandas as pd
 import pytest
 from pathlib import Path
 import sys
+import responses as responses_lib
+from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 import scraper
@@ -100,3 +102,22 @@ def test_extract_fields_missing_returns_empty():
         "commodity_full", "summary",
     ]:
         assert fields[key] == ""
+
+
+@responses_lib.activate
+def test_discover_solicitations_returns_open_only():
+    html = (FIXTURE_DIR / "sample_list_page.html").read_text()
+    # Page 1 — fixture has 2 total pages
+    responses_lib.add(responses_lib.POST, scraper.AJAX_URL, body=html, status=200)
+    # Page 2 — same fixture (one Open, one Awarded row each page)
+    responses_lib.add(responses_lib.POST, scraper.AJAX_URL, body=html, status=200)
+
+    import requests as req_lib
+    fake_session = req_lib.Session()
+    with patch.object(scraper, "make_session", return_value=fake_session):
+        result = scraper.discover_solicitations()
+
+    # Only "Open for Bidding" rows from both pages
+    assert len(result) == 2
+    assert all(r["status"] == "Open for Bidding" for r in result)
+    assert all(r["src_code"] == "BPM007579" for r in result)

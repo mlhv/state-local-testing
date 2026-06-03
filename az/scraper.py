@@ -276,7 +276,7 @@ def discover_solicitations(session=None):
     Paginate all pages of the open solicitations list via AJAX POST.
 
     The hdnUserValue payload key applies the "Open for Bidding" filter server-side,
-    so no client-side filtering is needed after this call.
+    but we also apply a client-side filter to guard against edge cases.
 
     Pass an existing session to reuse cookies (avoids a second CAPTCHA prompt).
     """
@@ -295,7 +295,7 @@ def discover_solicitations(session=None):
         all_rows.extend(rows)
         page_n += 1
 
-    return all_rows
+    return [r for r in all_rows if r.get("status") == "Open for Bidding"]
 
 
 def probe():
