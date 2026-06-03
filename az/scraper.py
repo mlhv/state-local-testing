@@ -259,11 +259,13 @@ def make_session():
 
         page.goto(BROWSE_URL, wait_until="domcontentloaded", timeout=30_000)
         try:
-            page.wait_for_selector("#body_x_grid_upgrid", timeout=60_000)
+            # Wait for an actual data row — the container div appears early but
+            # rows are injected by JavaScript; [data-id] is present on every row tr.
+            page.wait_for_selector("#body_x_grid_upgrid [data-id]", timeout=60_000)
         except Exception:
             context.close()
             sys.exit(
-                "ERROR: Arizona portal grid did not load within 60 s.\n"
+                "ERROR: Arizona portal grid rows did not load within 60 s.\n"
                 "The reCAPTCHA may have flagged the browser. Try again."
             )
 
