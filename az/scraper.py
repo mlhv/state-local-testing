@@ -140,3 +140,56 @@ def parse_list_page(html):
         rows.append(row)
 
     return rows, total_pages
+
+
+def _label_value(soup, label_text):
+    """
+    Find the value associated with a labelled field on an Ivalua detail page.
+
+    Primary path: data-iv-role="field" containing a data-iv-role="label" span
+    with label_text, then finds the data-iv-role="control" element inside it.
+
+    Falls back through legacy structures for fixture compatibility.
+    """
+    for el in soup.find_all(string=lambda t: t and t.strip() == label_text):
+        label_el = el.parent
+
+        # Primary: Ivalua field/controlWrapper pattern
+        field_div = label_el
+        while field_div and field_div.get("data-iv-role") != "field":
+            field_div = field_div.parent if field_div.parent else None
+        if field_div:
+            ctrl = field_div.find(attrs={"data-iv-role": "control"})
+            if ctrl:
+                return ctrl.get_text(separator=" ", strip=True).replace("\xa0", " ").strip()
+
+        # Legacy fallbacks
+        raw = label_el.next_sibling
+        if raw and isinstance(raw, str) and raw.strip():
+            return raw.strip().replace("\xa0", " ").strip()
+        tag_sibling = label_el.find_next_sibling()
+        if tag_sibling:
+            return tag_sibling.get_text(separator=" ", strip=True).replace("\xa0", " ").strip()
+        grandparent_sibling = (
+            label_el.parent.find_next_sibling() if label_el.parent else None
+        )
+        if grandparent_sibling:
+            return grandparent_sibling.get_text(separator=" ", strip=True).replace("\xa0", " ").strip()
+    return ""
+
+
+def extract_fields(html):
+    """Parse Solicitation General Information from an Arizona detail page."""
+    soup = BeautifulSoup(html, "html.parser")
+    return {
+        "lot_number":                _label_value(soup, "Lot #"),
+        "round_number":              _label_value(soup, "Round #"),
+        "fiscal_year":               _label_value(soup, "Fiscal Year"),
+        "rfx_type":                  _label_value(soup, "RFx types"),
+        "procurement_officer":       _label_value(soup, "Procurement Officer"),
+        "procurement_officer_email": _label_value(soup, "Procurement Officer Email"),
+        "procurement_officer_phone": _label_value(soup, "Procurement Officer Phone"),
+        "discussion_forum_cutoff":   _label_value(soup, "Discussion Forum Cut Off"),
+        "commodity_full":            _label_value(soup, "Commodity"),
+        "summary":                   _label_value(soup, "Summary"),
+    }

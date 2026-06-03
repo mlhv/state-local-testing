@@ -60,3 +60,43 @@ def test_parse_list_page_empty_table():
     rows, total_pages = scraper.parse_list_page(html)
     assert rows == []
     assert total_pages == 1
+
+
+def test_label_value_ivalua_field_control():
+    html = (FIXTURE_DIR / "sample_detail_page.html").read_text()
+    from bs4 import BeautifulSoup
+    soup = BeautifulSoup(html, "html.parser")
+    assert scraper._label_value(soup, "Round #") == "4"
+    assert scraper._label_value(soup, "Procurement Officer") == "Monica Rodriguez"
+
+
+def test_label_value_missing_returns_empty():
+    from bs4 import BeautifulSoup
+    soup = BeautifulSoup("<html><body></body></html>", "html.parser")
+    assert scraper._label_value(soup, "Nonexistent Field") == ""
+
+
+def test_extract_fields_all_fields():
+    html = (FIXTURE_DIR / "sample_detail_page.html").read_text()
+    fields = scraper.extract_fields(html)
+    assert fields["lot_number"] == "1"
+    assert fields["round_number"] == "4"
+    assert fields["fiscal_year"] == ""
+    assert fields["rfx_type"] == "IFB"
+    assert fields["procurement_officer"] == "Monica Rodriguez"
+    assert fields["procurement_officer_email"] == "mrodriguez8@azdot.gov"
+    assert fields["procurement_officer_phone"] == "6027122089"
+    assert fields["discussion_forum_cutoff"] == ""
+    assert fields["commodity_full"] == "72000000 - Building and Facility Construction and Maintenance Services"
+    assert "Arizona Procurement Code" in fields["summary"]
+
+
+def test_extract_fields_missing_returns_empty():
+    fields = scraper.extract_fields("<html><body></body></html>")
+    for key in [
+        "lot_number", "round_number", "fiscal_year", "rfx_type",
+        "procurement_officer", "procurement_officer_email",
+        "procurement_officer_phone", "discussion_forum_cutoff",
+        "commodity_full", "summary",
+    ]:
+        assert fields[key] == ""
