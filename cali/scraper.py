@@ -187,6 +187,13 @@ def discover_events(session) -> pd.DataFrame:
         "Origin": "https://caleprocure.ca.gov",
     }
     resp = session.post(LIST_ENDPOINT, data=body, headers=headers, timeout=30)
+
+    if resp.status_code == 278:
+        location = resp.json().get("IFLocation", "")
+        if location.startswith("/"):
+            location = "https://caleprocure.ca.gov" + location
+        resp = session.post(location, data=body, headers=headers, timeout=30)
+
     resp.raise_for_status()
     results = resp.json().get("CaptureResults", {})
     rows = results.get("tbl", [{}])[0].get("Children", {}).get("tblBodyTr", [])
@@ -228,6 +235,16 @@ def probe():
     print(f"Probing: {event_url}\n")
 
     results = fetch_results(session, body, event_id, dept, event_url)
+
+    if not dept:
+        script_nodes = results.get("strCurrScript", [])
+        if script_nodes:
+            html = script_nodes[0].get("Properties", {}).get("html", "")
+            m = re.search(r"BUSINESS_UNIT=([^&'\"]+)", html)
+            if m:
+                dept = m.group(1)
+                event_url = build_url(dept, event_id)
+                print(f"(dept extracted from strCurrScript: {dept})")
 
     Path("probe_response.json").write_text(json.dumps(results, indent=2))
     print("Raw JSON saved to probe_response.json\n")
@@ -282,6 +299,14 @@ def run():
 
         try:
             results = fetch_results(session, body, event_id, dept, event_url)
+            if not dept:
+                script_nodes = results.get("strCurrScript", [])
+                if script_nodes:
+                    html = script_nodes[0].get("Properties", {}).get("html", "")
+                    m = re.search(r"BUSINESS_UNIT=([^&'\"]+)", html)
+                    if m:
+                        dept = m.group(1)
+                        event_url = build_url(dept, event_id)
             extra   = extract_event_data(results)
         except Exception as e:
             print(f"  ERROR: {e}")
