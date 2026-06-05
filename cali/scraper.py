@@ -13,7 +13,6 @@ import requests
 import pandas as pd
 from pathlib import Path
 
-XLS_PATH = "events.xls"
 OUTPUT_PATH = "events_enriched.csv"
 TEMPLATE_PATH = "nlx_body.txt"
 DELAY_SECONDS = 0.5
@@ -160,12 +159,6 @@ def extract_event_data(results):
         "Format":              fmt,
         "Type":                event_type,
     }
-
-
-def load_xls():
-    df = pd.read_excel(XLS_PATH, header=0, engine="xlrd")
-    print(f"Loaded {len(df)} rows. Columns: {df.columns.tolist()}")
-    return df
 
 
 def load_template():
