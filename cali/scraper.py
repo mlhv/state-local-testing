@@ -2,7 +2,7 @@
 calEProcure event enrichment scraper.
 Usage:
   python scraper.py probe   -- fetch one event and print extracted fields
-  python scraper.py run     -- scrape all events from the XLS and output enriched CSV
+  python scraper.py run     -- fetch all open events via list API and output enriched CSV
 """
 
 import json
