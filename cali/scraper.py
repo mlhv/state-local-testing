@@ -225,16 +225,15 @@ def discover_events(session) -> pd.DataFrame:
 
 
 def probe():
-    df = load_xls()
+    session = make_session()
+    df = discover_events(session)
     body = load_template()
     row = df.iloc[0]
-    dept_col, id_col = df.columns[0], df.columns[2]
-    event_id  = str(row[id_col])
-    dept      = norm_dept(row[dept_col])
-    event_url = build_url(row[dept_col], event_id)
+    event_id  = str(row["Event ID"])
+    dept      = norm_dept(row["Department"])
+    event_url = build_url(row["Department"], event_id)
     print(f"Probing: {event_url}\n")
 
-    session = make_session()
     results = fetch_results(session, body, event_id, dept, event_url)
 
     Path("probe_response.json").write_text(json.dumps(results, indent=2))
@@ -251,39 +250,41 @@ def probe():
     print("\n=== Counties (Service Area) ===")
     print(data["counties"] or "(none)")
     print("\n=== Event Details ===")
-    print(f"Version:          {data['event_version']}")
-    print(f"Published Date:   {data['published_date']}")
-    print(f"Contact Phone:    {data['contact_phone']}")
-    print(f"Pre-Bid Mandatory:{data['prebid_mandatory']}")
-    print(f"Pre-Bid Date:     {data['prebid_date']}")
-    print(f"Pre-Bid Time:     {data['prebid_time']}")
-    print(f"Pre-Bid Location: {data['prebid_location']}")
-    print(f"Pre-Bid Comments: {data['prebid_comments']}")
+    print(f"Buyer Name:        {data['Buyer Name']}")
+    print(f"Buyer Email:       {data['Buyer Email']}")
+    print(f"Format:            {data['Format']}")
+    print(f"Type:              {data['Type']}")
+    print(f"Version:           {data['event_version']}")
+    print(f"Published Date:    {data['published_date']}")
+    print(f"Contact Phone:     {data['contact_phone']}")
+    print(f"Pre-Bid Mandatory: {data['prebid_mandatory']}")
+    print(f"Pre-Bid Date:      {data['prebid_date']}")
+    print(f"Pre-Bid Time:      {data['prebid_time']}")
+    print(f"Pre-Bid Location:  {data['prebid_location']}")
+    print(f"Pre-Bid Comments:  {data['prebid_comments']}")
 
 
 def run():
-    df = load_xls()
+    session = make_session()
+    df = discover_events(session)
     body = load_template()
-    dept_col, id_col = df.columns[0], df.columns[2]
     total = len(df)
     enriched = []
 
     done_ids = set()
     if Path(OUTPUT_PATH).exists():
         existing = pd.read_csv(OUTPUT_PATH)
-        done_ids = set(existing[id_col].astype(str))
+        done_ids = set(existing["Event ID"].astype(str))
         enriched = existing.to_dict("records")
         print(f"Resuming — {len(done_ids)} already done, {total - len(done_ids)} remaining")
 
-    session = make_session()
-
     for i, row in df.iterrows():
-        event_id = str(row[id_col])
+        event_id = str(row["Event ID"])
         if event_id in done_ids:
             continue
 
-        dept      = norm_dept(row[dept_col])
-        event_url = build_url(row[dept_col], event_id)
+        dept      = norm_dept(row["Department"])
+        event_url = build_url(row["Department"], event_id)
         print(f"[{i+1}/{total}] {event_url}")
 
         try:
