@@ -43,6 +43,7 @@ EMPTY_EXTRA = {k: "" for k in [
     "description", "unspsc_codes", "contractor_licenses", "counties",
     "service_area_ids", "event_version", "published_date", "contact_phone",
     "prebid_mandatory", "prebid_date", "prebid_time", "prebid_location", "prebid_comments",
+    "Buyer Name", "Buyer Email", "Format", "Type",
 ]}
 
 
@@ -135,6 +136,11 @@ def extract_event_data(results):
     if conf_row:
         conf_children = conf_row[0].get("Children", {})
 
+    buyer_name  = leaf(results.get("contactName", []))
+    buyer_email = leaf(results.get("emailAnchor", []))
+    fmt         = leaf(results.get("format1",     []))
+    event_type  = leaf(results.get("format2",     []))
+
     return {
         "description":         leaf(results.get("descriptiondetails", [])),
         "unspsc_codes":        "; ".join(unspsc_pairs),
@@ -149,6 +155,10 @@ def extract_event_data(results):
         "prebid_time":         leaf(conf_children.get("timeText", [])),
         "prebid_location":     leaf(conf_children.get("locationText", [])),
         "prebid_comments":     leaf(conf_children.get("commentsText", [])),
+        "Buyer Name":          buyer_name,
+        "Buyer Email":         buyer_email,
+        "Format":              fmt,
+        "Type":                event_type,
     }
 
 
