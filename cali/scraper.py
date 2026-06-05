@@ -6,6 +6,7 @@ Usage:
 """
 
 import json
+import re
 import sys
 import time
 import requests
@@ -29,6 +30,11 @@ FIXED_PARAMS = {
     "BIDDER_SETID": "STATE",
     "BIDDER_TYPE":  "B",
 }
+LIST_ENDPOINT = (
+    "https://caleprocure.ca.gov/nlx3/psc/psfpd1"
+    "/SUPPLIER/ERP/c/AUC_MANAGE_BIDS.AUC_RESP_INQ_AUC.GBL"
+)
+LIST_TEMPLATE_PATH = "nlx_list_body.txt"
 UA = (
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
     "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
@@ -156,6 +162,56 @@ def load_template():
     if not Path(TEMPLATE_PATH).exists():
         sys.exit(f"ERROR: {TEMPLATE_PATH} not found — copy the IF-TargetContent payload from DevTools and replace the file ")
     return Path(TEMPLATE_PATH).read_text()
+
+
+def _dept_from_href(href: str) -> str:
+    """Extract dept code from a calEProcure event URL, e.g. /event/0250/..."""
+    if not href or href == "#":
+        return ""
+    m = re.search(r"/event/([^/]+)/", href)
+    return m.group(1) if m else ""
+
+
+def discover_events(session) -> pd.DataFrame:
+    """Fetch all open events from the NLX list API. Returns a DataFrame."""
+    if not Path(LIST_TEMPLATE_PATH).exists():
+        sys.exit(f"ERROR: {LIST_TEMPLATE_PATH} not found")
+    body = Path(LIST_TEMPLATE_PATH).read_text()
+    headers = {
+        "Content-Type": "application/x-www-form-urlencoded",
+        "Referer": "https://caleprocure.ca.gov/pages/Events-BS3/event-search.aspx",
+        "Origin": "https://caleprocure.ca.gov",
+    }
+    resp = session.post(LIST_ENDPOINT, data=body, headers=headers, timeout=30)
+    resp.raise_for_status()
+    results = resp.json().get("CaptureResults", {})
+    rows = results.get("tbl", [{}])[0].get("Children", {}).get("tblBodyTr", [])
+    if not rows:
+        sys.exit("ERROR: List API returned 0 events — check session or portal status")
+
+    records = []
+    for row in rows:
+        ch = row.get("Children", {})
+        event_id   = (ch.get("tdEventId",   [{}])[0].get("Properties", {}).get("text")  or "").strip()
+        event_name = (ch.get("tdEventName",  [{}])[0].get("Properties", {}).get("text")  or "").strip()
+        dep_name   = (ch.get("tdDepName",    [{}])[0].get("Properties", {}).get("text")  or "").strip()
+        end_date   = (ch.get("tdEndDate",    [{}])[0].get("Properties", {}).get("text")  or "").strip()
+        status     = (ch.get("tdStatus",     [{}])[0].get("Properties", {}).get("text")  or "").strip()
+        dept_href  = (ch.get("tdDeptCode",   [{}])[0].get("Properties", {}).get("href")  or "").strip()
+        dept_code  = _dept_from_href(dept_href)
+        records.append({
+            "Event ID":        event_id,
+            "Event Name":      event_name,
+            "Department Name": dep_name,
+            "End Date":        end_date,
+            "Status":          status,
+            "Department":      dept_code,
+        })
+
+    df = pd.DataFrame(records)
+    print(f"Discovered {len(df)} events from list API.")
+    return df
+
 
 def probe():
     df = load_xls()
