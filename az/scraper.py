@@ -67,25 +67,28 @@ def load_done_ids(output_path):
     return set(df.loc[df["scrape_status"] == "success", "src_code"].astype(str))
 
 
-# Cell index → field key for Arizona's 9-column grid.
-# 0  Editing column (icon link) → detail_href (href only)
+# Cell index → field key for Arizona's 12-column grid.
+# 0  Edit + title    → detail_href (href only)
 # 1  Code            → src_code
 # 2  Label           → solicitation_label
-# 3  Commodity       → commodity
-# 4  Agency          → buying_agency
-# 5  Status          → status
-# 6  RFx Awarded     → rfx_awarded
-# 7  Begin (UTC-7)   → begin_date
-# 8  End (UTC-7)     → end_date
+# 3  Created date    → (skipped)
+# 4  Commodity       → commodity
+# 5  Agency          → buying_agency
+# 6  Empty/icon      → (skipped)
+# 7  Status          → status
+# 8  RFx Awarded     → rfx_awarded
+# 9  Countdown timer → (skipped)
+# 10 Begin (UTC-7)   → begin_date
+# 11 End (UTC-7)     → end_date
 _CELL_MAP = [
     (1, "src_code"),
     (2, "solicitation_label"),
-    (3, "commodity"),
-    (4, "buying_agency"),
-    (5, "status"),
-    (6, "rfx_awarded"),
-    (7, "begin_date"),
-    (8, "end_date"),
+    (4, "commodity"),
+    (5, "buying_agency"),
+    (7, "status"),
+    (8, "rfx_awarded"),
+    (10, "begin_date"),
+    (11, "end_date"),
 ]
 
 
@@ -146,35 +149,53 @@ def _label_value(soup, label_text):
     """
     Find the value associated with a labelled field on an Ivalua detail page.
 
-    Primary path: data-iv-role="field" containing a data-iv-role="label" span
-    with label_text, then finds the data-iv-role="control" element inside it.
-
-    Falls back through legacy structures for fixture compatibility.
+    Handles three Ivalua control patterns found inside data-iv-role="controlWrapper":
+      1. Dropdown / multi-selector — data-iv-role contains both "control" and "selector";
+         displayed value in .selected_label spans (multi) or .text div (single).
+      2. Input element — <input data-iv-role="control">; read value= attribute.
+      3. Readonly span / div — data-iv-role="control"; read via get_text().
     """
     for el in soup.find_all(string=lambda t: t and t.strip() == label_text):
         label_el = el.parent
 
-        # Primary: Ivalua field/controlWrapper pattern
+        # Walk up to the enclosing data-iv-role="field" div
         field_div = label_el
         while field_div and field_div.get("data-iv-role") != "field":
             field_div = field_div.parent if field_div.parent else None
-        if field_div:
-            ctrl = field_div.find(attrs={"data-iv-role": "control"})
-            if ctrl:
-                return ctrl.get_text(separator=" ", strip=True).replace("\xa0", " ").strip()
+        if not field_div:
+            continue
 
-        # Legacy fallbacks
-        raw = label_el.next_sibling
-        if raw and isinstance(raw, str) and raw.strip():
-            return raw.strip().replace("\xa0", " ").strip()
-        tag_sibling = label_el.find_next_sibling()
-        if tag_sibling:
-            return tag_sibling.get_text(separator=" ", strip=True).replace("\xa0", " ").strip()
-        grandparent_sibling = (
-            label_el.parent.find_next_sibling() if label_el.parent else None
+        wrapper = field_div.find(attrs={"data-iv-role": "controlWrapper"})
+        if not wrapper:
+            continue
+
+        # 1. Selector controls (dropdown / multi-selector)
+        sel = wrapper.find(
+            lambda tag: "control" in tag.get("data-iv-role", "")
+            and "selector" in tag.get("data-iv-role", "")
         )
-        if grandparent_sibling:
-            return grandparent_sibling.get_text(separator=" ", strip=True).replace("\xa0", " ").strip()
+        if sel:
+            labels = [s.get_text(separator=" ", strip=True)
+                      for s in sel.find_all(class_="selected_label")]
+            if labels:
+                return " | ".join(labels).replace("\xa0", " ").strip()
+            for tdiv in sel.find_all(class_="text"):
+                if "default" not in (tdiv.get("class") or []):
+                    t = tdiv.get_text(separator=" ", strip=True).replace("\xa0", " ").strip()
+                    if t:
+                        return t
+            continue
+
+        # 2. Input element — read value attribute (get_text() always returns "")
+        inp = wrapper.find("input", attrs={"data-iv-role": "control"})
+        if inp:
+            return (inp.get("value") or "").strip()
+
+        # 3. Readonly span or div
+        ctrl = wrapper.find(attrs={"data-iv-role": "control"})
+        if ctrl and ctrl.name in ("span", "div"):
+            return ctrl.get_text(separator=" ", strip=True).replace("\xa0", " ").strip()
+
     return ""
 
 
@@ -195,12 +216,16 @@ def extract_fields(html):
     }
 
 
+# Payload for AJAX grid pagination.
+# The server is stateless — filter fields must be included on every request,
+# exactly as the browser resends them with each page-navigation click.
 _BASE_PAYLOAD = {
     "__EVENTTARGET": "body_x_grid_grd",
     "__LASTFOCUS": "",
-    "REQUEST_METHOD": "POST",
-    # Server-side "Open for Bidding" filter — keeps closed/awarded records off the list.
+    "REQUEST_METHOD": "GET",
     "hdnUserValue": ",body_x_selStatusCode_1",
+    "body:x:selStatusCode_1": "val",
+    "body_x_selStatusCode_1_text": "",
     "x_headaction": "",
     "x_headloginName": "",
     "hdnMandatory": "0",
@@ -244,158 +269,207 @@ def make_session():
             "Install: pip install patchright && patchright install chromium"
         )
 
-    with sync_playwright() as p:
-        context = p.chromium.launch_persistent_context(
-            user_data_dir=str(USER_DATA_DIR),
-            headless=False,
-            channel="chrome",
-        )
-        page = context.new_page()
+    print("Launching Chrome...")
+    pw = sync_playwright().start()
+    context = pw.chromium.launch_persistent_context(
+        user_data_dir=str(USER_DATA_DIR),
+        headless=False,
+        channel="chrome",
+    )
+    page = context.new_page()
 
-        for warmup_url in ["https://www.google.com", "https://www.bing.com"]:
-            try:
-                page.goto(warmup_url, wait_until="domcontentloaded", timeout=15_000)
-                time.sleep(2)
-            except Exception:
-                pass
-
-        page.goto(BROWSE_URL, wait_until="domcontentloaded", timeout=30_000)
+    for warmup_url in ["https://www.google.com", "https://www.bing.com"]:
         try:
-            page.wait_for_selector("#body_x_grid_upgrid", timeout=60_000)
+            print(f"Warming up: {warmup_url}")
+            page.goto(warmup_url, wait_until="domcontentloaded", timeout=15_000)
+            time.sleep(2)
         except Exception:
-            context.close()
-            sys.exit(
-                "ERROR: Arizona portal grid did not load within 60 s.\n"
-                "The reCAPTCHA may have flagged the browser. Try again."
-            )
+            pass
 
-        cookies = context.cookies()
-        context.close()
+    print(f"Loading portal: {BROWSE_URL}")
+    page.goto(BROWSE_URL, wait_until="domcontentloaded", timeout=30_000)
+    print("Waiting for reCAPTCHA to pass and grid to load...")
+    try:
+        page.wait_for_selector("#body_x_grid_upgrid", timeout=60_000)
+    except Exception:
+        pw.stop()
+        sys.exit(
+            "ERROR: Arizona portal grid did not load within 60 s.\n"
+            "The reCAPTCHA may have flagged the browser. Try again."
+        )
+    print("Grid loaded.")
+
+    # Navigate to a detail page to pass the /bpm/ browser check.
+    # The check is module-scoped: the /rfp/ cookie above doesn't cover /bpm/.
+    # On the first run this may require a manual CAPTCHA solve; the persistent
+    # profile caches the result so subsequent runs pass automatically.
+    try:
+        href = page.get_attribute(
+            "#body_x_grid_upgrid a[href*='process_manage']", "href"
+        )
+        if href:
+            print(f"Passing /bpm/ browser check via detail page...")
+            page.goto(BASE_URL + href, wait_until="domcontentloaded", timeout=30_000)
+            try:
+                page.wait_for_selector("#body_x_tabc_rfp_ext", timeout=15_000)
+                print("/bpm/ check passed.")
+            except Exception:
+                print(
+                    "\nBrowser check required for detail pages.\n"
+                    "Please complete the CAPTCHA in the Chrome window, then press Enter..."
+                )
+                input()
+    except Exception:
+        pass
+
+    cookies = context.cookies()
+    # Keep page alive — callers use page.evaluate() to fetch detail pages via
+    # the browser's JS fetch(), which carries all cookies without triggering a
+    # new navigation-based browser check.  Caller must call pw.stop() when done.
 
     session = requests.Session()
     session.headers.update({"User-Agent": UA})
     for c in cookies:
         session.cookies.set(c["name"], c["value"], domain=c["domain"])
-    return session
+    return session, page, pw
 
 
-def discover_solicitations(session=None):
+def discover_solicitations(session, page):
     """
-    Paginate all pages of the open solicitations list via AJAX POST.
+    Paginate the "Open for Bidding" solicitations list via AJAX POST.
 
-    The hdnUserValue payload key applies the "Open for Bidding" filter server-side,
-    but we also apply a client-side filter to guard against edge cases.
-
-    Pass an existing session to reuse cookies (avoids a second CAPTCHA prompt).
+    The filter is applied stateless — _BASE_PAYLOAD includes body:x:selStatusCode_1=val
+    on every request, so the server re-applies it each time without session state.
     """
-    if session is None:
-        session = make_session()
-
     all_rows = []
+    seen_src_codes = set()
     page_n = 1
-    total_pages = 1
 
-    while page_n <= total_pages:
+    while True:
         time.sleep(DELAY_SECONDS)
+        print(f"  Fetching page {page_n}...", end=" ", flush=True)
         resp = session.post(AJAX_URL, data=_pagination_payload(page_n), timeout=30)
         resp.raise_for_status()
-        rows, total_pages = parse_list_page(resp.text)
-        all_rows.extend(rows)
+        rows, reported_pages = parse_list_page(resp.text)
+        if not rows:
+            print("empty — done.")
+            break
+        new_rows = [r for r in rows if r["src_code"] not in seen_src_codes]
+        if not new_rows:
+            print("all duplicates — done.")
+            break
+        for r in new_rows:
+            seen_src_codes.add(r["src_code"])
+        all_rows.extend(new_rows)
+        print(f"{len(new_rows)} rows (total {len(all_rows)}, pager shows {reported_pages} pages)")
+        if page_n >= reported_pages:
+            break
         page_n += 1
 
     return [r for r in all_rows if r.get("status") == "Open for Bidding"]
 
 
+def _browser_get(page, url):
+    """Fetch a URL via the browser's JS fetch() — bypasses path-scoped browser checks."""
+    return page.evaluate(
+        f"fetch({url!r}, {{credentials: 'include'}}).then(r => r.text())"
+    )
+
+
 def probe():
-    session = make_session()
-    print("Discovering solicitations (paginating list)...")
-    open_rows = discover_solicitations(session)
-    done_ids = load_done_ids(OUTPUT_PATH)
-
-    new_rows = [r for r in open_rows if r["src_code"] not in done_ids]
-    if not new_rows:
-        print("No new open solicitations to probe.")
-        return
-
-    row = new_rows[0]
-    url = BASE_URL + row["detail_href"]
-    print(f"Probing: {url}\n")
-
+    session, page, pw = make_session()
     try:
-        resp = session.get(url, timeout=30)
-        resp.raise_for_status()
-        fields = extract_fields(resp.text)
-    except Exception as e:
-        sys.exit(f"ERROR fetching {url}: {e}")
+        print("Discovering solicitations (paginating list)...")
+        open_rows = discover_solicitations(session, page)
+        done_ids = load_done_ids(OUTPUT_PATH)
 
-    print("=== List Fields ===")
-    print(f"Code:               {row['src_code']}")
-    print(f"Label:              {row['solicitation_label']}")
-    print(f"Commodity:          {row['commodity']}")
-    print(f"Buying Agency:      {row['buying_agency']}")
-    print(f"Status:             {row['status']}")
-    print(f"RFx Awarded:        {row['rfx_awarded']}")
-    print(f"Begin:              {row['begin_date']}")
-    print(f"End:                {row['end_date']}")
-    print(f"\n=== Detail Fields ===")
-    print(f"Lot #:              {fields['lot_number']}")
-    print(f"Round #:            {fields['round_number']}")
-    print(f"Fiscal Year:        {fields['fiscal_year']}")
-    print(f"RFx Type:           {fields['rfx_type']}")
-    print(f"Procurement Officer:{fields['procurement_officer']}")
-    print(f"Email:              {fields['procurement_officer_email']}")
-    print(f"Phone:              {fields['procurement_officer_phone']}")
-    print(f"Forum Cut Off:      {fields['discussion_forum_cutoff']}")
-    print(f"Commodity (full):   {fields['commodity_full']}")
-    print(f"\n=== Summary ===")
-    summary = fields["summary"]
-    print(summary[:500] + ("..." if len(summary) > 500 else ""))
+        new_rows = [r for r in open_rows if r["src_code"] not in done_ids]
+        if not new_rows:
+            print("No new open solicitations to probe.")
+            return
+
+        row = new_rows[0]
+        url = BASE_URL + row["detail_href"]
+        print(f"Probing: {url}\n")
+
+        try:
+            html = _browser_get(page, url)
+            fields = extract_fields(html)
+        except Exception as e:
+            sys.exit(f"ERROR fetching {url}: {e}")
+
+        print("=== List Fields ===")
+        print(f"Code:               {row['src_code']}")
+        print(f"Label:              {row['solicitation_label']}")
+        print(f"Commodity:          {row['commodity']}")
+        print(f"Buying Agency:      {row['buying_agency']}")
+        print(f"Status:             {row['status']}")
+        print(f"RFx Awarded:        {row['rfx_awarded']}")
+        print(f"Begin:              {row['begin_date']}")
+        print(f"End:                {row['end_date']}")
+        print(f"\n=== Detail Fields ===")
+        print(f"Lot #:              {fields['lot_number']}")
+        print(f"Round #:            {fields['round_number']}")
+        print(f"Fiscal Year:        {fields['fiscal_year']}")
+        print(f"RFx Type:           {fields['rfx_type']}")
+        print(f"Procurement Officer:{fields['procurement_officer']}")
+        print(f"Email:              {fields['procurement_officer_email']}")
+        print(f"Phone:              {fields['procurement_officer_phone']}")
+        print(f"Forum Cut Off:      {fields['discussion_forum_cutoff']}")
+        print(f"Commodity (full):   {fields['commodity_full']}")
+        print(f"\n=== Summary ===")
+        summary = fields["summary"]
+        print(summary[:500] + ("..." if len(summary) > 500 else ""))
+    finally:
+        pw.stop()
 
 
 def run():
-    session = make_session()
-    print("Discovering solicitations (paginating list)...")
-    open_rows = discover_solicitations(session)
-    done_ids = load_done_ids(OUTPUT_PATH)
+    session, page, pw = make_session()
+    try:
+        print("Discovering solicitations (paginating list)...")
+        open_rows = discover_solicitations(session, page)
+        done_ids = load_done_ids(OUTPUT_PATH)
 
-    to_scrape = [r for r in open_rows if r["src_code"] not in done_ids]
-    total_new = len(to_scrape)
-    print(f"Open: {len(open_rows)}. Already done: {len(done_ids)}. To scrape: {total_new}")
+        to_scrape = [r for r in open_rows if r["src_code"] not in done_ids]
+        total_new = len(to_scrape)
+        print(f"Open: {len(open_rows)}. Already done: {len(done_ids)}. To scrape: {total_new}")
 
-    if total_new == 0:
-        print("Nothing to do.")
-        return
+        if total_new == 0:
+            print("Nothing to do.")
+            return
 
-    enriched = []
-    if Path(OUTPUT_PATH).exists():
-        all_rows = pd.read_csv(OUTPUT_PATH, dtype=str).to_dict("records")
-        enriched = [r for r in all_rows if r.get("scrape_status") == "success"]
-    success_count = 0
-    error_count = 0
+        enriched = []
+        if Path(OUTPUT_PATH).exists():
+            all_rows = pd.read_csv(OUTPUT_PATH, dtype=str).to_dict("records")
+            enriched = [r for r in all_rows if r.get("scrape_status") == "success"]
+        success_count = 0
+        error_count = 0
 
-    for i, row in enumerate(to_scrape, 1):
-        url = BASE_URL + row["detail_href"]
-        print(f"[{i}/{total_new}] {url}")
+        for i, row in enumerate(to_scrape, 1):
+            url = BASE_URL + row["detail_href"]
+            print(f"[{i}/{total_new}] {url}")
 
-        try:
-            resp = session.get(url, timeout=30)
-            resp.raise_for_status()
-            scraped = extract_fields(resp.text)
-            scraped["arizona_url"] = url
-            scraped["scrape_status"] = "success"
-            success_count += 1
-        except Exception as e:
-            print(f"  ERROR: {e}")
-            scraped = EMPTY_SCRAPED.copy()
-            scraped["arizona_url"] = url
-            scraped["scrape_status"] = "error"
-            error_count += 1
+            try:
+                html = _browser_get(page, url)
+                scraped = extract_fields(html)
+                scraped["arizona_url"] = url
+                scraped["scrape_status"] = "success"
+                success_count += 1
+            except Exception as e:
+                print(f"  ERROR: {e}")
+                scraped = EMPTY_SCRAPED.copy()
+                scraped["arizona_url"] = url
+                scraped["scrape_status"] = "error"
+                error_count += 1
 
-        enriched.append({**row, **scraped})
-        pd.DataFrame(enriched).to_csv(OUTPUT_PATH, index=False)
-        time.sleep(DELAY_SECONDS)
+            enriched.append({**row, **scraped})
+            pd.DataFrame(enriched).to_csv(OUTPUT_PATH, index=False)
+            time.sleep(DELAY_SECONDS)
 
-    print(f"\nDone. {success_count} succeeded, {error_count} errored. Output: {OUTPUT_PATH}")
+        print(f"\nDone. {success_count} succeeded, {error_count} errored. Output: {OUTPUT_PATH}")
+    finally:
+        pw.stop()
 
 
 if __name__ == "__main__":

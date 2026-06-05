@@ -1,6 +1,6 @@
 # State Procurement Scraper — Master Handoff
 
-**Last updated:** 2026-06-03
+**Last updated:** 2026-06-04
 
 ## Project Goal
 
@@ -157,7 +157,7 @@ python scraper.py run
 
 **Portal:** https://app.az.gov/page.aspx/en/rfp/request_browse_public
 
-**How it works:** Same Ivalua SaaS platform as Alabama. List grid is populated via AJAX POST to `ajax.aspx` — same endpoint structure, same pagination mechanism. `hdnUserValue: ,body_x_selStatusCode_1` in the payload applies the "Open for Bidding" filter server-side (unlike Alabama where filtering is client-side). Detail pages use Ivalua's `data-iv-role="field"/"control"` structure parsed with BeautifulSoup. reCAPTCHA v2 is present but auto-passes with patchright — no manual interaction needed. `make_session()` waits for `#body_x_grid_upgrid` to confirm the page loaded.
+**How it works:** Ivalua SaaS portal (same platform as Alabama). `make_session()` launches Chrome via patchright to pass reCAPTCHA v2 and the path-scoped `/bpm/` browser check, then hands off to `requests` for all list pagination. The list grid is populated by POSTing directly to `ajax.aspx` — the server returns only the grid HTML fragment (not a full page). BeautifulSoup parses rows and the pager from that fragment. The browser stays open and is used for detail page fetches via `page.evaluate(fetch(...))`.
 
 **Run:**
 ```bash
@@ -170,17 +170,50 @@ python scraper.py run
 ```
 
 **Key technical notes:**
-- Same Ivalua AJAX pattern as Alabama — `ajax.aspx?ivControlUIDsAsync=body:x:grid:upgrid&asyncmodulename=rfp&asyncpagename=request_browse_public`
-- reCAPTCHA v2 auto-passes with patchright (fingerprint patches score it as human); no `input()` pause needed
-- Persistent profile at `~/.az_scraper_profile`; warmup visits google.com + bing.com before portal
-- Server-side status filter via `hdnUserValue: ,body_x_selStatusCode_1` — no client-side filtering needed (safety net still applied)
-- No manual export step — open solicitations discovered directly
+- **Ivalua is stateless** — the filter must be included in the body of every AJAX pagination POST. `hdnUserValue=,body_x_selStatusCode_1` alone is not enough; the actual value field `body:x:selStatusCode_1=val` must also be present. Without it, the server ignores the filter and returns all ~151 records across ~10 pages.
+- **`REQUEST_METHOD=GET`** must be in the payload even though the HTTP method is POST — this is an Ivalua internal field and must match what the browser sends or the filter is ignored.
+- **Pager is a sliding window** — `reported_pages` grows as you advance through pages (e.g., shows 7 on page 1, 8 on page 4). Do not freeze `total_pages` from page 1. Correct termination: `page_n >= reported_pages` (you're on the last button the current window shows), plus dedup and empty-page guards.
+- **Two separate path-scoped browser checks** — `/rfp/` (list page) and `/bpm/` (detail pages) each have their own reCAPTCHA check. `make_session()` must pre-warm both by navigating to a detail page before returning.
+- Persistent profile at `~/.az_scraper_profile`; google.com + bing.com warmup before portal.
+- With filter working: 41 open records across exactly 3 pages of 15.
 
 **Output columns (21):** `src_code`, `solicitation_label`, `commodity`, `buying_agency`, `status`, `rfx_awarded`, `begin_date`, `end_date`, `detail_href`, `lot_number`, `round_number`, `fiscal_year`, `rfx_type`, `procurement_officer`, `procurement_officer_email`, `procurement_officer_phone`, `discussion_forum_cutoff`, `commodity_full`, `summary`, `arizona_url`, `scrape_status`
 
 **Known gaps:** DB normalization
 
 **Install note:** `pip install patchright && patchright install chromium` required on first setup.
+
+---
+
+## Lessons Learned (apply to future states)
+
+### Ivalua portals (Alabama, Arizona — likely Montana, Wyoming, Idaho, others)
+
+**The server is stateless.** Filter fields must be included in the body of every AJAX pagination POST. It is not enough to do a search POST first and hope the session carries the filter forward — it doesn't. Every request is evaluated from scratch.
+
+**`hdnUserValue` is not the filter — it's a hint.** `hdnUserValue=,body_x_selStatusCode_1` tells the server "this field has a non-default value" but you must also send the field itself: `body:x:selStatusCode_1=val`. Without the actual value field the server treats the filter as empty and returns all records.
+
+**Match `REQUEST_METHOD` to what the browser sends.** For Ivalua portals this is typically `GET` even though the HTTP method is `POST`. Using `POST` here causes the filter to be silently ignored.
+
+**To find the correct filter payload:** Open DevTools → Network → Fetch/XHR, apply the status filter in the browser UI, click Search, then click page 2. Inspect that page-2 request body — it contains all the fields the server needs for filtered pagination. The filter fields will be present in both the Search request and every page navigation after it.
+
+**Pager sliding window.** Ivalua's pager only renders buttons for a window of pages around the current one. `reported_pages` (the max button number visible) grows as you navigate deeper. Correct termination: `if page_n >= reported_pages: break`. Do not freeze `total_pages` from page 1 alone — you'll stop too early.
+
+**Path-scoped browser checks.** Ivalua portals often have separate reCAPTCHA/browser checks for different URL paths (e.g., `/rfp/` for the list, `/bpm/` for detail pages). `make_session()` must navigate to a page under each protected path before returning so both session cookies are populated.
+
+**AJAX endpoint returns HTML, not JSON.** `ajax.aspx?ivControlUIDsAsync=body:x:grid:upgrid` returns a raw HTML fragment of the grid div. Parse it with BeautifulSoup directly — no JSON parsing needed.
+
+**Keep the browser alive for detail pages.** After `make_session()` hands off to `requests` for list pagination, keep the patchright browser open. Use `page.evaluate(fetch(..., {credentials: 'include'}))` for detail page fetches — this re-uses the browser's cookie jar (including path-scoped cookies) without triggering a new browser check.
+
+---
+
+### General AJAX portal scraping
+
+**Capture the pagination request, not just the search request.** The search request and the page-2 request often differ in subtle ways (different `__EVENTTARGET`, missing filter fields in one but not the other). Always capture the exact POST body for a page navigation while a filter is active.
+
+**If you're getting too many records, the filter isn't working.** Check page count: if the portal shows N pages with filter applied in the browser but your scraper fetches 3× that many pages, the filter fields are missing or wrong in your payload.
+
+**`open_on_page` per-page logging is a fast diagnostic.** Adding `sum(r["status"] == "Open for Bidding" for r in rows)` to the page fetch print immediately shows whether the server filter is working (all rows open) or not (mixed statuses).
 
 ---
 
