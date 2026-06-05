@@ -312,7 +312,10 @@ def run():
             print(f"  ERROR: {e}")
             extra = EMPTY_EXTRA.copy()
 
-        enriched.append({**row.to_dict(), **extra, "event_url": event_url})
+        record = row.to_dict()
+        if dept and not record.get("Department"):
+            record["Department"] = dept
+        enriched.append({**record, **extra, "event_url": event_url})
         pd.DataFrame(enriched).to_csv(OUTPUT_PATH, index=False)
         time.sleep(DELAY_SECONDS)
 
