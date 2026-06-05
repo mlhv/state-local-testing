@@ -184,9 +184,10 @@ def _dept_from_href(href: str) -> str:
 
 def discover_events(session) -> pd.DataFrame:
     """Fetch all open events from the NLX list API. Returns a DataFrame."""
-    if not Path(LIST_TEMPLATE_PATH).exists():
-        sys.exit(f"ERROR: {LIST_TEMPLATE_PATH} not found")
-    body = Path(LIST_TEMPLATE_PATH).read_text()
+    template_path = Path(__file__).parent / LIST_TEMPLATE_PATH
+    if not template_path.exists():
+        sys.exit(f"ERROR: {template_path} not found")
+    body = template_path.read_text()
     headers = {
         "Content-Type": "application/x-www-form-urlencoded",
         "Referer": "https://caleprocure.ca.gov/pages/Events-BS3/event-search.aspx",
