@@ -88,7 +88,53 @@ python scraper.py run
 
 1. **DB normalization** — map state-specific fields to common schema; load alongside SAM.gov data
 2. **NAICS/UNSPSC crosswalk** — CA outputs UNSPSC codes, SAM.gov uses NAICS
-3. **Automated input export** — both states require a manual download step before each run
+3. **Automated list discovery** — CA, PA, MA currently require a manual download step before each run; see roadmap below
+
+---
+
+## Automation Roadmap — List Discovery
+
+CA, PA, and MA scrapers depend on a manually downloaded input file. The goal is to eliminate that step so all six states are fully automated. Priority order: CA first (highest volume, cleanest path), then PA and MA.
+
+### California — NLX list API (Priority 1)
+
+**Current state:** Operator downloads `events.xls` from calEProcure, re-saves it from Excel, then runs the scraper.
+
+**Target state:** `python scraper.py run` with no input file — scraper discovers all open events itself via the NLX JSON API.
+
+**Approach:** The CA scraper already calls the NLX API for detail pages (`caleprocure.ca.gov/nlx3/psc/...`). The same NLX infrastructure almost certainly exposes a search/list endpoint. To find it: open calEProcure event-search in DevTools → Network → Fetch/XHR, apply Status = Posted filter, and capture the XHR response. The payload likely contains a list of `(dept_code, event_id)` pairs that replaces the XLS entirely.
+
+**Impact:** Removes the XLS download and Excel re-save requirement. Makes CA fully automated alongside AL, AK, AZ.
+
+**Complexity:** Low — one investigation session to capture the list endpoint, then replace `load_xls()` with a `discover_events(session)` function.
+
+---
+
+### Pennsylvania — Scrape list pages directly (Priority 2)
+
+**Current state:** Operator downloads `Solicitations-*.csv` from PA eMarketplace, then runs the scraper.
+
+**Target state:** `python scraper.py run` with no input file — scraper paginates the search results pages itself.
+
+**Approach:** Do NOT automate the CSV export button (ASP.NET ViewState makes this fragile). Instead, scrape the list pages directly — the same way AL and AZ work. PA eMarketplace search results are server-rendered HTML with no bot protection; plain `requests` + BeautifulSoup can paginate them. Extract bid numbers from each results page, build a synthetic input dataframe in memory, and pass it to the existing enrichment loop.
+
+**Impact:** Removes the manual CSV download. Makes PA fully automated.
+
+**Complexity:** Medium — need to map the search URL parameters (status filter, pagination) and verify the results HTML structure. The existing enrichment loop is unchanged.
+
+---
+
+### Massachusetts — Scrape list pages directly (Priority 3)
+
+**Current state:** Operator downloads `bidSearchResults.csv` from COMMBUYS, then runs the scraper.
+
+**Target state:** `python scraper.py run` with no input file.
+
+**Approach:** Same as PA — scrape the open-bids search results pages directly rather than automating the JSF export button. COMMBUYS search results are server-rendered HTML. Navigate the open-bids search URL with query parameters, paginate, extract bid numbers, feed into the enrichment loop.
+
+**Impact:** Removes the manual CSV download. Makes MA fully automated.
+
+**Complexity:** Medium — JSF portals sometimes require a `javax.faces.ViewState` token even for GET requests. Check whether the open-bids URL is directly navigable without a form submission first.
 
 ---
 

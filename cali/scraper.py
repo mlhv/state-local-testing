@@ -284,9 +284,14 @@ def run():
     done_ids = set()
     if Path(OUTPUT_PATH).exists():
         existing = pd.read_csv(OUTPUT_PATH)
-        done_ids = set(existing["Event ID"].astype(str))
+        if "scrape_status" not in existing.columns:
+            existing["scrape_status"] = existing["event_version"].apply(
+                lambda v: "success" if pd.notna(v) else "error"
+            )
+        done_ids = set(existing.loc[existing["scrape_status"] == "success", "Event ID"].astype(str))
         enriched = existing.to_dict("records")
-        print(f"Resuming — {len(done_ids)} already done, {total - len(done_ids)} remaining")
+        new_count = len(set(df["Event ID"].astype(str)) - done_ids)
+        print(f"Resuming — {len(done_ids)} successfully done, {new_count} remaining")
 
     for i, row in df.iterrows():
         event_id = str(row["Event ID"])
@@ -307,15 +312,17 @@ def run():
                     if m:
                         dept = m.group(1)
                         event_url = build_url(dept, event_id)
-            extra   = extract_event_data(results)
+            extra         = extract_event_data(results)
+            scrape_status = "success"
         except Exception as e:
             print(f"  ERROR: {e}")
-            extra = EMPTY_EXTRA.copy()
+            extra         = EMPTY_EXTRA.copy()
+            scrape_status = "error"
 
         record = row.to_dict()
         if dept and not record.get("Department"):
             record["Department"] = dept
-        enriched.append({**record, **extra, "event_url": event_url})
+        enriched.append({**record, **extra, "scrape_status": scrape_status, "event_url": event_url})
         pd.DataFrame(enriched).to_csv(OUTPUT_PATH, index=False)
         time.sleep(DELAY_SECONDS)
 

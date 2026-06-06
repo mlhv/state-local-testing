@@ -88,7 +88,7 @@ Always run commands from inside the state's folder so relative paths (input CSV 
 
 | State | Folder | Portal | Tech | Notes |
 |---|---|---|---|---|
-| California | `cali/` | calEProcure | requests + JSON | InFlight NLX POST API — no HTML parsing needed. See `cali/HANDOFF.md` for API details. |
+| California | `cali/` | calEProcure | requests + JSON | InFlight NLX POST API — no HTML parsing needed. List fetched automatically via list API (no manual export). See `cali/HANDOFF.md` for API details. |
 | Pennsylvania | `pa/` | PA eMarketplace | requests + BeautifulSoup | Server-rendered XHTML. BASE_URL must include `www.` |
 
 ## Known Techniques
